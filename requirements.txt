@@ -1,0 +1,4 @@
+openpyxl
+shiny
+shiny_validate
+pandas

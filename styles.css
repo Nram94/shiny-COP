@@ -1,0 +1,91 @@
+/* Import Raleway font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap');
+
+/* Apply the Raleway font globally */
+body {
+    font-family: 'Raleway', sans-serif; /* Apply Raleway as the default font */
+}
+
+/* Apply font to headers and other elements if needed */
+h1, h2, h3, h4, h5, h6, p, button, input, select, textarea {
+    font-family: 'Raleway', sans-serif; /* Ensure the font is consistent across elements */
+}
+
+.navbar .navbar-brand{
+    font-weight:bold;
+    background-color: #37465d;
+    color: white;
+}
+
+/* Style the individual nav items (tabs) */
+.navbar .nav-link {
+    background-color: #37465d;
+    color: white; /* Change the text color of nav items */
+    padding: 10px 20px; /* Adjust padding for spacing */
+
+}
+
+/* Change color on hover for nav items */
+.navbar .nav-link:hover {
+    background-color: #cd6a2d; /* Background color on hover */
+
+}
+
+/* Active tab styling */
+.navbar .nav-link.active {
+    background-color: #cd6a2d; /* Background color for the active tab */
+    border-bottom: 2px solid #cd6a2d; /* Optional: underline active tab */
+    color: white;
+}
+
+/* Customize button colors */
+.btn-primary {
+    background-color: #2f3e56; /* Change to your desired button color */
+    border-color: #2f3e56;
+    color: white;
+}
+
+/* Add hover effect to buttons */
+.btn-primary:hover {
+    background-color: #cd6a2d; /* Lighter shade on hover */
+    border-color: #cd6a2d;
+}
+
+.accordion-button {
+    background-color: #37465d;
+    color: white;
+    font-weight:bold;
+    border-radius: 6px;
+}
+.accordion-button:hover {
+    background-color:#cd6a2d ;
+}
+.accordion-item:hover {
+    background-color:#cd6a2d ;
+}
+.accordion-item {
+    background-color: #37465d; /* Background color for the accordion body */
+    color: white; /* Text color inside the accordion */
+    border-radius: 4px;
+
+  
+}
+/* Customize accordion panel body */
+.accordion {
+    background-color: #2f3e56; /* Background color for the accordion body */
+    color: #000; /* Text color inside the accordion */
+    border-radius: 6px;
+    
+    
+}
+
+/* Customize accordion panel header */
+.accordion-body {
+    background-color: #37465d; /* Color for accordion body */
+    color: white; /* Text color */
+    border-radius: 4px;
+}
+
+.p.Descripción {
+    font-weight: bold;
+}
