@@ -89,3 +89,25 @@ h1, h2, h3, h4, h5, h6, p, button, input, select, textarea {
 .p.Descripción {
     font-weight: bold;
 }
+
+.sidebar {
+    margin-left: -50%;
+}
+
+
+.collapse-toggle {
+    position: relative;
+    left: 35%;
+}
+
+.collapse-toggle:hover {
+    background-color: #cd6a2d; /* Background color on hover */
+}
+
+.btn-default {
+    background-color: #cd6a2d;
+    color:white; 
+}
+.btn-default:hover {
+    background-color: #2f3e56; 
+}

@@ -16,11 +16,9 @@ ui.include_css(css_path)
 ui.page_opts(window_title="Evaluación de Desempeño")
 
 with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desempeno", bg='#37465d',
-                   position='fixed-top'):
+                   position='fixed-top', padding="70px"):
     with ui.nav_panel("Evaluación de Desempeño"):
         ### Panel para nombre de evaluador, nombre de evaluado y cargo evalaudo.
-        ui.h2()
-        ui.h2()
         with ui.accordion(id='info_evaluador', open="Información Evaluador"):
             with ui.accordion_panel("Información Evaluador"):
                 with ui.card():
@@ -92,9 +90,28 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
             ui.input_action_button("enviar", "Enviar", class_="btn btn-primary"),
             class_="d-flex justify-content-end",
         )
+
     with ui.nav_panel("Análisis de Desempeño"):
-        ui.h2()
-        ui.p("hi")
+        with ui.layout_sidebar():
+            with ui.sidebar(bg="#37465d", style="color: white; border: none;", 
+                border=None):  
+                ui.input_slider("mass", "Max Body Mass", 200, 8000, 6000)
+                ui.input_checkbox_group(
+                    "species",
+                    "Species",
+                    ["Adelie", "Chinstrap", "Gentoo"],
+                    selected=["Adelie", "Chinstrap", "Gentoo"],
+                    
+                )
+                ui.input_text("new_label", "New Label")
+                ui.input_action_button("update", "Update",)  
+                ui.input_action_button("refresh_button", "Refresh")
+
+            with ui.layout_columns():
+                with ui.card():
+                    "plot"
+                with ui.card(): 
+                    "table"
 
 # Requerido para que InputValidator funcione en Express
 input_validator = None
