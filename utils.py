@@ -76,26 +76,36 @@ SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
 def authenticate_google_drive():
     creds = None
-    token_path = Path('token.json')  # Using pathlib Path
+    token_path = Path('token.json')  # Use pathlib's Path for token.json
 
+    # Check if token.json exists and load the credentials
     if token_path.exists():
-        # Load credentials from token.json
         creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
-    else:
-        # Load credentials from environment variables
-        creds_data = {
-            "installed": {
-                "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-                "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-                "token_uri": os.getenv("GOOGLE_TOKEN_URI")
-            }
-        }
 
-        # Use OAuth 2.0 flow with credentials from environment variables
-        creds = Credentials.from_authorized_user_info(creds_data["installed"], SCOPES)
+    # If credentials are invalid, handle refresh or re-authentication
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            # Load credentials from environment variables instead of credentials.json
+            creds_data = {
+                "installed": {
+                    "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+                    "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+                    "refresh_token": os.getenv("GOOGLE_REFRESH_TOKEN"),
+                    "token_uri": os.getenv("GOOGLE_TOKEN_URI", "https://oauth2.googleapis.com/token")
+                }
+            }
+            # Use OAuth 2.0 flow with credentials from the environment variables
+            flow = InstalledAppFlow.from_client_config(creds_data, SCOPES)
+            creds = flow.run_local_server(port=0)
 
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
+
+        # Save the credentials for the next run
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
 
     return creds
 
