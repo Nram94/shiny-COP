@@ -191,7 +191,7 @@ def save_to_csv():
         ui.modal_show(ui.modal("Evaluación enviada, ¡Gracias!"))
 
         # Reset page
-        reset_inputs()
+        # reset_inputs()
 
 
     except Exception as e:
@@ -200,7 +200,8 @@ def save_to_csv():
         print(f"Error saving to CSV: {e}")
         ui.modal_show(ui.modal("Error al guardar los datos. Inténtelo de nuevo."))
 
-
+@reactive.effect
+@reactive.event(input.enviar)
 def reset_inputs():
     # Reset each input to its default state
      for key in INPUTS.keys():
