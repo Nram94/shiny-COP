@@ -65,9 +65,6 @@ def collect_inputs():
     df = pd.DataFrame(data)
     return df
 
-# Define the path to the .env file
-env_path = Path('.') / '.env'
-
 # Load environment variables from the .env file using Path
 # Load .env for local development
 if not os.getenv('GITHUB_ACTIONS'):
