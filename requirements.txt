@@ -2,7 +2,7 @@ openpyxl
 shiny
 shiny_validate
 pandas
-dotenv
+python-dotenv
 google-api-core
 google-api-python-client
 google-auth
