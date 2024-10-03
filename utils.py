@@ -69,7 +69,10 @@ def collect_inputs():
 env_path = Path('.') / '.env'
 
 # Load environment variables from the .env file using Path
-load_dotenv(dotenv_path=env_path)
+# Load .env for local development
+if not os.getenv('GITHUB_ACTIONS'):
+    env_path = Path('.') / '.env'
+    load_dotenv(dotenv_path=env_path)
 
 # Scopes required for Google Drive
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
