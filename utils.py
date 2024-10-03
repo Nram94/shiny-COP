@@ -8,7 +8,6 @@ from googleapiclient.http import MediaFileUpload
 from google.auth.transport.requests import Request
 import pandas as pd
 from pathlib import Path
-from shiny import session
 from data_import import INPUTS
 
 def collect_inputs():
