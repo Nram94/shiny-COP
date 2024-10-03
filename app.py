@@ -5,6 +5,7 @@ from shiny import reactive
 from shiny.express import input, ui
 from shiny_validate import InputValidator, check
 from data_import import competencias, INPUTS
+from utils import save_to_google_drive
 
 ### Obtener ruta de la app.
 app_dir = Path(__file__).parent
@@ -179,19 +180,9 @@ def save_to_csv():
                 # Input does not exist, you can choose to omit it or handle it differently
                 print(f"Notice: Input '{k}' is not present in the form.")
 
-        # Add created_at and updated_at fields with current timestamp
-        current_timestamp = datetime.now().isoformat()
-        input_data["created_at"] = current_timestamp
-        input_data["updated_at"] = current_timestamp
-        # Create a DataFrame row with the collected input data
-        df_row = pd.DataFrame([input_data])
-        # Append the new row to the existing CSV file
-        df_row.to_csv(responses, mode="a", header=False, index=False)
+        save_to_google_drive(input_data, file_name='responses.csv')
         # Show success message
         ui.modal_show(ui.modal("Evaluación enviada, ¡Gracias!"))
-
-        # Reset page
-        # reset_inputs()
 
 
     except Exception as e:
