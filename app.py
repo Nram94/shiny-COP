@@ -180,7 +180,14 @@ def save_to_csv():
                 # Input does not exist, you can choose to omit it or handle it differently
                 print(f"Notice: Input '{k}' is not present in the form.")
 
-        save_to_google_drive(input_data, file_name='responses.csv')
+        current_timestamp = datetime.now().isoformat()
+        input_data["created_at"] = current_timestamp
+        input_data["updated_at"] = current_timestamp
+
+        # Create a DataFrame row with the collected input data
+        df_row = pd.DataFrame([input_data])
+        print(df_row.columns)
+        save_to_google_drive('responses.csv', df_row)
         # Show success message
         ui.modal_show(ui.modal("Evaluación enviada, ¡Gracias!"))
 

@@ -1,11 +1,9 @@
+from io import StringIO
 import os
-from dotenv import load_dotenv
-from datetime import datetime
 from pathlib import Path
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import json
-
 import pandas as pd
 from pathlib import Path
 from data_import import INPUTS
@@ -72,14 +70,13 @@ def create_credentials_json():
             "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
-            "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"],
-            # Include refresh token if available
-            "refresh_token": os.getenv("GOOGLE_REFRESH_TOKEN", "")
+            "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "https://connect.posit.cloud/Nram94/content/0191dd86-2aff-45f6-9d62-b52d238372e1"],
         }
     }
 
     # Write credentials to a JSON file dynamically
-    credentials_file = Path('credentials.json')
+    app_dir = Path(__file__).parent
+    credentials_file = app_dir / 'credentials.json'
     with open(credentials_file, 'w') as f:
         json.dump(creds_data, f)
 
@@ -100,13 +97,26 @@ def save_to_google_drive(file_name, data_frame):
     # Authenticate with Google Drive
     drive = authenticate_google_drive()
 
-    # Save the CSV locally using Path
-    local_path = Path(file_name)
-    data_frame.to_csv(local_path)
+    # Convert DataFrame to a CSV format in-memory using StringIO
+    csv_buffer = StringIO()
+    data_frame.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0)  # Move the cursor to the start of the buffer
 
-    # Upload the file to Google Drive
-    gfile = drive.CreateFile({'title': local_path.name})  # Set the filename in Google Drive
-    gfile.SetContentFile(str(local_path))  # Set the local file to upload
+    # Search for the file in Google Drive to check if it already exists
+    query = f"title = '{file_name}' and trashed=false"
+    file_list = drive.ListFile({'q': query}).GetList()
+
+    if file_list:
+        # If the file exists, update it
+        print(f"File '{file_name}' exists, updating it.")
+        gfile = file_list[0]  # Take the first match
+    else:
+        # If the file does not exist, create a new one
+        print(f"File '{file_name}' does not exist, creating a new file.")
+        gfile = drive.CreateFile({'title': file_name})  # Create a new file
+
+    # Set the content of the file from the in-memory CSV
+    gfile.SetContentString(csv_buffer.getvalue())  # Upload the CSV content from memory
     gfile.Upload()  # Upload the file to Google Drive
 
-    print(f"Uploaded {local_path.name} to Google Drive successfully!")
+    print(f"Uploaded {file_name} to Google Drive successfully!")

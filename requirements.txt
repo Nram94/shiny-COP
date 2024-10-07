@@ -2,5 +2,4 @@ openpyxl
 shiny
 shiny_validate
 pandas
-python-dotenv
 PyDrive
