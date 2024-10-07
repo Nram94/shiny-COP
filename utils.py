@@ -1,11 +1,11 @@
 import os
 from dotenv import load_dotenv
 from datetime import datetime
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-from google.auth.transport.requests import Request
+from pathlib import Path
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+import json
+
 import pandas as pd
 from pathlib import Path
 from data_import import INPUTS
@@ -64,79 +64,49 @@ def collect_inputs():
     df = pd.DataFrame(data)
     return df
 
-# Load environment variables from the .env file using Path
-# Load .env for local development
-if not os.getenv('GITHUB_ACTIONS'):
-    env_path = Path('.') / '.env'
-    load_dotenv(dotenv_path=env_path)
+# Function to dynamically create credentials.json from environment variables
+def create_credentials_json():
+    creds_data = {
+        "installed": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+            "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"],
+            # Include refresh token if available
+            "refresh_token": os.getenv("GOOGLE_REFRESH_TOKEN", "")
+        }
+    }
 
-# Scopes required for Google Drive
-SCOPES = ['https://www.googleapis.com/auth/drive.file']
+    # Write credentials to a JSON file dynamically
+    credentials_file = Path('credentials.json')
+    with open(credentials_file, 'w') as f:
+        json.dump(creds_data, f)
 
+    return credentials_file
+
+# Authenticate using PyDrive with dynamically created credentials.json
 def authenticate_google_drive():
-    creds = None
-    token_path = Path('token.json')  # Use pathlib's Path for token.json
+    create_credentials_json()  # Create credentials file from env variables
+    gauth = GoogleAuth()
 
-    # Check if token.json exists and load the credentials
-    if token_path.exists():
-        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
-
-    # If credentials are invalid, handle refresh or re-authentication
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            # Load credentials from environment variables instead of credentials.json
-            creds_data = {
-                "installed": {
-                    "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-                    "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
-                    "refresh_token": os.getenv("GOOGLE_REFRESH_TOKEN"),
-                    "token_uri": os.getenv("GOOGLE_TOKEN_URI", "https://oauth2.googleapis.com/token")
-                }
-            }
-            # Use OAuth 2.0 flow with credentials from the environment variables
-            flow = InstalledAppFlow.from_client_config(creds_data, SCOPES)
-            creds = flow.run_local_server(port=0)
-
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-
-        # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
-
-    return creds
-
-def upload_to_drive(file_path, file_name):
-    creds = authenticate_google_drive()
-    service = build('drive', 'v3', credentials=creds)
-
-    file_metadata = {'name': file_name}
-    media = MediaFileUpload(file_path, mimetype='text/csv')
-    
-    file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-    print(f"File uploaded to Google Drive with file ID: {file.get('id')}")
-
-def save_to_google_drive(input_data, file_name='responses.csv'):
-    try:
-        current_timestamp = datetime.now().isoformat()
-        input_data["created_at"] = current_timestamp
-        input_data["updated_at"] = current_timestamp
-
-        # Create a DataFrame row with the collected input data
-        df_row = pd.DataFrame([input_data])
-
-        # Save the CSV temporarily
-        temp_csv_path = file_name
-        df_row.to_csv(temp_csv_path, index=False)
-
-        # Upload the file to Google Drive
-        upload_to_drive(temp_csv_path, file_name)
-
-        # Remove the temporary file
-        os.remove(temp_csv_path)
+    # Load credentials from the dynamically generated credentials.json
+    gauth.LoadCredentialsFile('credentials.json')
+    drive = GoogleDrive(gauth)
+    return drive
 
 
-    except Exception as e:
-        print(f"Error saving to Google Drive: {e}")
+def save_to_google_drive(file_name, data_frame):
+    # Authenticate with Google Drive
+    drive = authenticate_google_drive()
+
+    # Save the CSV locally using Path
+    local_path = Path(file_name)
+    data_frame.to_csv(local_path)
+
+    # Upload the file to Google Drive
+    gfile = drive.CreateFile({'title': local_path.name})  # Set the filename in Google Drive
+    gfile.SetContentFile(str(local_path))  # Set the local file to upload
+    gfile.Upload()  # Upload the file to Google Drive
+
+    print(f"Uploaded {local_path.name} to Google Drive successfully!")
