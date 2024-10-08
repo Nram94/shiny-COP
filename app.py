@@ -1,11 +1,17 @@
+import base64
 from datetime import datetime
+from dotenv import load_dotenv
+import gspread
+from google.oauth2.service_account import Credentials
+import json
+import os
 from pathlib import Path
 import pandas as pd
 from shiny import reactive
 from shiny.express import input, ui
 from shiny_validate import InputValidator, check
 from data_import import competencias, INPUTS
-from utils import save_to_google_drive
+
 
 ### Obtener ruta de la app.
 app_dir = Path(__file__).parent
@@ -186,17 +192,20 @@ def save_to_csv():
 
         # Create a DataFrame row with the collected input data
         df_row = pd.DataFrame([input_data])
-        print(df_row.columns)
-        save_to_google_drive('responses.csv', df_row)
+        if input_data['rol_evaluador'] == 'Autoevaluación':
+            save_to_google_drive(df_row, input_data['name_evaluador'])
+        else:
+            save_to_google_drive(df_row, input_data['name_evaluado'])
         # Show success message
         ui.modal_show(ui.modal("Evaluación enviada, ¡Gracias!"))
 
 
     except Exception as e:
         # Log the error and show an error message.
-        print(type(e))
-        print(f"Error saving to CSV: {e}")
+        # print(type(e))
+        # print(f"Error saving to CSV: {e}")
         ui.modal_show(ui.modal("Error al guardar los datos. Inténtelo de nuevo."))
+
 
 @reactive.effect
 @reactive.event(input.enviar)
@@ -219,3 +228,43 @@ def reset_inputs():
                 key,
                 selected=[]
             )
+
+def save_to_google_drive(data_frame, worksheet_name):
+    # Load the .env file
+    load_dotenv()
+
+    SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+    # Retrieve and decode the base64 credentials
+    encoded_credentials = os.getenv('GOOGLE_CREDENTIALS_JSON_BASE64')
+    if not encoded_credentials:
+        raise ValueError("Missing GOOGLE_CREDENTIALS_JSON_BASE64 environment variable")
+
+    credentials_json = base64.b64decode(encoded_credentials).decode('utf-8')
+    creds_dict = json.loads(credentials_json)
+    
+    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    client = gspread.authorize(creds)
+
+    workbook_id = '1INWYtoIlv9rAM47g8AwcUqiTYPWi6dcxYvMAlBLaLeE'
+    workbook = client.open_by_key(workbook_id)
+
+    # Check if worksheet exists
+    worksheet_list = map(lambda x: x.title, workbook.worksheets())
+    new_worksheet_name = worksheet_name
+
+    if new_worksheet_name in worksheet_list:
+        sheet = workbook.worksheet(new_worksheet_name)
+    else:
+       sheet = workbook.add_worksheet(new_worksheet_name, rows=100, cols=100)
+
+    # sheet.update([data_frame.columns.values.tolist()] + data_frame.values.tolist())
+    # Get existing data from the worksheet
+    existing_data = sheet.get_all_values()
+    
+    # If there are no existing data rows (other than header), write the entire dataframe
+    if len(existing_data) <= 1:
+        sheet.update([data_frame.columns.values.tolist()] + data_frame.values.tolist())
+    else:
+        # Keep the header and append the new data below existing rows
+        next_row = len(existing_data) + 1
+        sheet.update(f'A{next_row}', data_frame.values.tolist())
