@@ -1,6 +1,7 @@
 openpyxl
 shiny
 shiny_validate
+shinywidgets
 pandas
 python-dotenv
 plotly
