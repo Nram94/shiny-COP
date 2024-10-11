@@ -3,6 +3,7 @@ shiny
 shiny_validate
 pandas
 python-dotenv
+plotly
 google-api-python-client
 google-auth
 google-auth-httplib2

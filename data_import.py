@@ -28,12 +28,12 @@ INPUTS = {
     "cargo_evaluado": ui.input_select(
         "cargo_evaluado",
         "Cargo del evaluado",
-        choices=["", "Analista", "Auxiliar", "Director"],
+        choices=["", "Analista", "Auxiliar", "Director", "Médico"],
     ),
     "cargo_evaluado_auto": ui.input_select(
         "cargo_evaluado_auto",
         "Cargo",
-        choices=["", "Analista", "Auxiliar", "Director"],
+        choices=["", "Analista", "Auxiliar", "Director", "Médico"],
     ),
     # Decisión y Liderazgo
     # cluster1:
@@ -503,3 +503,34 @@ INPUTS = {
     ),
     # },
 }
+
+COMPS = {
+    "cl1_comp1": "Toma de Decisiones",
+    "cl1_comp2": "Capacidad para Dirigir",
+    "cl2_comp1": "Trabajo en equipo",
+    "cl2_comp2": "Integridad/Adhesión a Valores",
+    "cl3_comp1": "Desarrollo de Relaciones",
+    "cl3_comp2": "Impacto e Influencia",
+    "cl3_comp3": "Comunicación Efectiva",
+    "cl4_comp1": "Realización de Informes y Reportes",
+    "cl4_comp2": "Competencia Técnica",
+    "cl4_comp3": "Capacidad de Análsis",
+    "cl5_comp1": "Capacidad de Aprendizaje",
+    "cl5_comp2": "Capacidad Creativa e de Innovación",
+    "cl5_comp3": "Pensamiento Estratégico",
+    "cl6_comp1": "Planeación y Organización",
+    "cl6_comp2": "Orientación de Resultados",
+    "cl6_comp3": "Adhesión a instrucciones y procedimientos",
+    "cl7_comp1": "Flexibilidad/Adaptabilidad",
+    "cl7_comp2": "Capacidad de Autocontrol",
+    "cl8_comp1": "Capacidad de Logro",
+    "cl8_comp2": "Habilidad Comercial",
+    "cl9_comp1": "Orientación al Servicio"
+    }
+
+WEIGHTS = {
+    "Líder": 0.4,
+    "Partner": 0.15,
+    "Autoevaluación":0.2,
+    "Cliente interno":0.25
+    }

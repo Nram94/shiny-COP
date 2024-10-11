@@ -1,16 +1,14 @@
-import base64
 from datetime import datetime
-from dotenv import load_dotenv
-import gspread
-from google.oauth2.service_account import Credentials
-import json
-import os
+import matplotlib.pyplot as plt
 from pathlib import Path
 import pandas as pd
+import plotly.express as px
 from shiny import reactive
-from shiny.express import input, ui
+from shiny.express import input, ui, render
 from shiny_validate import InputValidator, check
-from data_import import competencias, INPUTS
+from shinywidgets import render_plotly
+from data_import import competencias, INPUTS, WEIGHTS, COMPS
+from utils import save_to_google_drive, get_worksheet_names, calculate_competence_averages
 
 
 ### Obtener ruta de la app.
@@ -46,7 +44,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                         INPUTS["cargo_evaluado"]
 
         ### Panel condicional de directores/analistas para desplegar paneles de competencia de acuerdo al cargo.
-        with ui.panel_conditional(f"['Director', 'Analista'].includes(input.cargo_evaluado) || ['Director', 'Analista'].includes(input.cargo_evaluado_auto)"):
+        with ui.panel_conditional(f"['Director', 'Analista', 'Médico'].includes(input.cargo_evaluado) || ['Director', 'Analista'].includes(input.cargo_evaluado_auto)"):
             with ui.accordion(id='comp1', open=False):      
                 with ui.accordion_panel(f"Competencias - {competencias.clusterName[0]}"):
                     with ui.card():
@@ -63,7 +61,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                             INPUTS[descriptor_id]   
 
         ### Panel condicional de todos los cargos para desplegar paneles de competencia de acuerdo al cargo.
-        with ui.panel_conditional(f"['Director', 'Analista', 'Auxiliar'].includes(input.cargo_evaluado) || ['Director', 'Analista', 'Auxiliar'].includes(input.cargo_evaluado_auto)"):
+        with ui.panel_conditional(f"['Director', 'Analista', 'Médico', 'Auxiliar'].includes(input.cargo_evaluado) || ['Director', 'Analista', 'Auxiliar'].includes(input.cargo_evaluado_auto)"):
             with ui.accordion(id='comp2', open=False, style='margin-top:-26px'):
                 # Obtener clusters únicos
                 clusters = competencias["cluster"].unique()
@@ -102,26 +100,78 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
         with ui.layout_sidebar():
             with ui.sidebar(bg="#37465d", style="color: white; border: none;", 
                 border=None):  
-                ui.input_slider("mass", "Max Body Mass", 200, 8000, 6000)
-                ui.input_checkbox_group(
-                    "species",
-                    "Species",
-                    ["Adelie", "Chinstrap", "Gentoo"],
-                    selected=["Adelie", "Chinstrap", "Gentoo"],
+
+                # ui.input_slider("mass", "Max Body Mass", 200, 8000, 6000)
+                # ui.input_checkbox_group(
+                #     "species",
+                #     "Species",
+                #     ["Adelie", "Chinstrap", "Gentoo"],
+                #     selected=["Adelie", "Chinstrap", "Gentoo"],
                     
+                # )
+                names = get_worksheet_names()
+                ui.input_select(
+                    "select_employee",
+                    "Evaluado",
+                    names,
+                    selected=names[0]
                 )
-                ui.input_text("new_label", "New Label")
-                ui.input_action_button("update", "Update",)  
-                ui.input_action_button("refresh_button", "Refresh")
+                
 
             with ui.layout_columns():
                 with ui.card():
-                    "plot"
-                with ui.card(): 
-                    "table"
+                    @render_plotly
+                    def plot():
+                        try:
+                            df_subset = select_data()
+                            df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
+                            df_melted['Nivel de Desarrollo'] = df_melted['Nivel de Desarrollo'].round(2)
+
+                            return px.bar(df_melted,
+                                        title='Nivel de Desarrollo por Competencia', 
+                                        y='Competencia',
+                                        x='Nivel de Desarrollo',
+                                        text='Nivel de Desarrollo',
+                                        range_x=[0, 3],
+                                        ).update_traces(
+                                            textposition='outside',
+
+                                        ).update_layout(yaxis_title='')
+                        except:
+                            comps = list(COMPS.values())
+                            df_empty = pd.DataFrame({"Competencia": comps, "Nivel de Desarrollo": 0.0})
+                            return px.bar(df_empty,
+                                        title='Nivel de Desarrollo por Competencia', 
+                                        y='Competencia',
+                                        x='Nivel de Desarrollo',
+                                        text='Nivel de Desarrollo',
+                                        range_x=[0, 3],
+                                        ).update_traces(
+                                            textposition='outside',
+
+                                        ).update_layout(yaxis_title='')
+                
+                    @render.data_frame
+                    def render_weights():
+                        weights_df = pd.DataFrame(list(WEIGHTS.items()), columns=['Rol Evaluador', 'Peso(%)'])
+                        weights_df['Peso(%)'] = weights_df['Peso(%)'] * 100
+                        return render.DataGrid(weights_df)
+
+
+                # with ui.card(): 
+                #     "table"
+                #     @render.data_frame
+                #     def data_f():
+                #         df_subset_table = load_from_google_drive()
+                #         return df_subset_table.head() 
+
 
 # Requerido para que InputValidator funcione en Express
 input_validator = None
+
+
+def select_data():
+    return calculate_competence_averages(input.select_employee())
 
 @reactive.effect
 def _():
@@ -145,6 +195,7 @@ def _():
     #     for key, input_widget in INPUTS.items():
     #         if ("descriptor" in key):
     #             input_validator.add_rule(key, check.required(message="Campo requerido")) 
+
 
 # Efecto y mensaje de salida cuando se envié el fomrulario usando Enviar.
 @reactive.effect
@@ -228,43 +279,3 @@ def reset_inputs():
                 key,
                 selected=[]
             )
-
-def save_to_google_drive(data_frame, worksheet_name):
-    # Load the .env file
-    load_dotenv()
-
-    SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-    # Retrieve and decode the base64 credentials
-    encoded_credentials = os.getenv('GOOGLE_CREDENTIALS_JSON_BASE64')
-    if not encoded_credentials:
-        raise ValueError("Missing GOOGLE_CREDENTIALS_JSON_BASE64 environment variable")
-
-    credentials_json = base64.b64decode(encoded_credentials).decode('utf-8')
-    creds_dict = json.loads(credentials_json)
-    
-    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-    client = gspread.authorize(creds)
-
-    workbook_id = '1INWYtoIlv9rAM47g8AwcUqiTYPWi6dcxYvMAlBLaLeE'
-    workbook = client.open_by_key(workbook_id)
-
-    # Check if worksheet exists
-    worksheet_list = map(lambda x: x.title, workbook.worksheets())
-    new_worksheet_name = worksheet_name
-
-    if new_worksheet_name in worksheet_list:
-        sheet = workbook.worksheet(new_worksheet_name)
-    else:
-       sheet = workbook.add_worksheet(new_worksheet_name, rows=100, cols=100)
-
-    # sheet.update([data_frame.columns.values.tolist()] + data_frame.values.tolist())
-    # Get existing data from the worksheet
-    existing_data = sheet.get_all_values()
-    
-    # If there are no existing data rows (other than header), write the entire dataframe
-    if len(existing_data) <= 1:
-        sheet.update([data_frame.columns.values.tolist()] + data_frame.values.tolist())
-    else:
-        # Keep the header and append the new data below existing rows
-        next_row = len(existing_data) + 1
-        sheet.update(f'A{next_row}', data_frame.values.tolist())

@@ -2,3 +2,4 @@ app.py.bkup
 notes.txt
 .env
 credentials.json
+credentials_base64.txt
