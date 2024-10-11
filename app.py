@@ -1,5 +1,4 @@
 from datetime import datetime
-import matplotlib.pyplot as plt
 from pathlib import Path
 import pandas as pd
 import plotly.express as px
