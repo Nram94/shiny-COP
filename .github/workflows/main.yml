@@ -1,2 +1,25 @@
-- name: Set up environment variables
-  run: echo "GOOGLE_CREDENTIALS_JSON_BASE64=${{ secrets.GOOGLE_CREDENTIALS_JSON_BASE64 }}" >> $GITHUB_ENV
+name: My App CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt  # PyDrive should be included in requirements.txt
+
+    - name: Set up environment variables
+      run: echo "GOOGLE_CREDENTIALS_JSON_BASE64=${{ secrets.GOOGLE_CREDENTIALS_JSON_BASE64 }}" >> $GITHUB_ENV
