@@ -95,75 +95,54 @@ def get_worksheet_names():
     return worksheet_list
 
 def calculate_competence_averages(user_name):
-    df = load_user_sheet_google_drive(user_name)
+    try:
+        df = load_user_sheet_google_drive(user_name)
 
-    # # Extract columns that start with 'cl'
-    # comp_columns = [col for col in df.columns if col.startswith('cl')]
+        # Extract relevant columns (those that start with 'cl')
+        comp_columns = [col for col in df.columns if col.startswith('cl')]
+        df[comp_columns] = df[comp_columns].apply(pd.to_numeric, errors='coerce')
 
-    # # Initialize a dictionary to hold average values
-    # averages = {}
+        # Initialize a dictionary to hold weighted sums and weights
+        weighted_sums = {}
+        weight_totals = {}
 
-    # # Group descriptors by competence (e.g., 'cl1_comp1')
-    # for comp in comp_columns:
-    #     # Extract the competence group (e.g., 'cl1_comp1')
-    #     comp_group = '_'.join(comp.split('_')[:2])
+        # Loop through all competence columns
+        for comp in comp_columns:
+            # Extract the competence group (e.g., 'cl1_comp1')
+            comp_group = '_'.join(comp.split('_')[:2])
 
-    #     # If the group is not in the averages dict, initialize it
-    #     if comp_group not in averages:
-    #         averages[comp_group] = []
+            # If the group is not in the dictionaries, initialize it
+            if comp_group not in weighted_sums:
+                weighted_sums[comp_group] = 0
+                weight_totals[comp_group] = 0
 
-    #     # Add the values for that descriptor to the corresponding competence group
-    #     averages[comp_group].append(df[comp])
+       
+            # Loop through each row and apply the corresponding weight
+            for i, row in df.iterrows():
+                rol_evaluador = row['rol_evaluador']
+                weight = WEIGHTS.get(rol_evaluador, 1)  # Default to 1 if no weight is specified
+
+                # # Apply special condition for "Auxiliar"
+                # if rol_evaluador == "Auxiliar" and df.columns.get_loc(comp) <= start_col_index:
+                #     continue  # Skip columns before 'cl1_comp2_descriptor3' for "Auxiliar"
+                # Add the weighted value to the weighted sum
+                weighted_sums[comp_group] += row[comp] * weight
+                # Add the weight to the total weight sum
+                weight_totals[comp_group] += weight
+
+        # Create a dictionary to store the final weighted average for each competence group
+        final_averages = {}
+
+        # Calculate the weighted average for each competence group
+        for comp_group in weighted_sums:
+            final_averages[comp_group] = weighted_sums[comp_group] / weight_totals[comp_group]  # Weighted average formula
+
+        # Create a DataFrame with a single row for the weighted averages
+        avg_df = pd.DataFrame([final_averages])
+    except Exception as e:
+         avg_df = pd.DataFrame()
     
-    # # Create a dictionary to store the final average for each competence group
-    # final_averages = {}
-
-    # # Calculate the average for each competence group
-    # for comp_group, descriptors in averages.items():
-    #     # Combine all descriptors for that competence group and calculate the overall average
-    #     combined_values = pd.concat(descriptors, axis=1)
-    #     final_averages[comp_group] = combined_values.mean().mean()  # Mean of all descriptors
-
-    # # Create a DataFrame with a single row for the averages
-    # avg_df = pd.DataFrame([final_averages])
-    # Extract relevant columns (those that start with 'cl')
-    comp_columns = [col for col in df.columns if col.startswith('cl')]
-
-    # Initialize a dictionary to hold weighted sums and weights
-    weighted_sums = {}
-    weight_totals = {}
-
-    # Loop through all competence columns
-    for comp in comp_columns:
-        # Extract the competence group (e.g., 'cl1_comp1')
-        comp_group = '_'.join(comp.split('_')[:2])
-
-        # If the group is not in the dictionaries, initialize it
-        if comp_group not in weighted_sums:
-            weighted_sums[comp_group] = 0
-            weight_totals[comp_group] = 0
-
-        # Loop through each row and apply the corresponding weight
-        for i, row in df.iterrows():
-            rol_evaluador = row['rol_evaluador']
-            weight = WEIGHTS.get(rol_evaluador, 1)  # Default to 1 if no weight is specified
-            
-            # Add the weighted value to the weighted sum
-            weighted_sums[comp_group] += row[comp] * weight
-            # Add the weight to the total weight sum
-            weight_totals[comp_group] += weight
-
-    # Create a dictionary to store the final weighted average for each competence group
-    final_averages = {}
-
-    # Calculate the weighted average for each competence group
-    for comp_group in weighted_sums:
-        final_averages[comp_group] = weighted_sums[comp_group] / weight_totals[comp_group]  # Weighted average formula
-
-    # Create a DataFrame with a single row for the weighted averages
-    avg_df = pd.DataFrame([final_averages])
     
-    avg_df.rename(columns=COMPS, inplace=True)
     
     return avg_df
 

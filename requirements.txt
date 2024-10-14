@@ -1,3 +1,4 @@
+faicons
 openpyxl
 shiny
 shiny_validate
