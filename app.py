@@ -275,15 +275,15 @@ def _():
         input_validator.add_rule("name_evaluado", check.required(message="Campo requerido"))
         input_validator.add_rule("cargo_evaluado", check.required(message="Campo requerido"))
 
-    # if input.cargo_evaluado() == "Auxiliar" or input.cargo_evaluado_auto() == "Auxiliar":
-    #     for key, input_widget in INPUTS.items():
-    #         if not("cl1" in key):
-    #             if ("descriptor" in key):
-    #                 input_validator.add_rule(key, check.required(message="Campo requerido"))    
-    # else:
-    #     for key, input_widget in INPUTS.items():
-    #         if ("descriptor" in key):
-    #             input_validator.add_rule(key, check.required(message="Campo requerido")) 
+    if input.cargo_evaluado() == "Auxiliar" or input.cargo_evaluado_auto() == "Auxiliar":
+        for key, input_widget in INPUTS.items():
+            if not("cl1" in key):
+                if ("descriptor" in key):
+                    input_validator.add_rule(key, check.required(message="Campo requerido"))    
+    else:
+        for key, input_widget in INPUTS.items():
+            if ("descriptor" in key):
+                input_validator.add_rule(key, check.required(message="Campo requerido")) 
 
 
 # Efecto y mensaje de salida cuando se envié el fomrulario usando Enviar.
