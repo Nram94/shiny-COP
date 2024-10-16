@@ -147,6 +147,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                             ).update_traces(
                                                 textposition='outside',
                                             ).update_layout(
+                                                xaxis_title='Nivel de desarrollo (%)',
                                                 yaxis_title='',
                                                 coloraxis_showscale=False,
                                                 margin=dict(l=0)
@@ -167,6 +168,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                             ).update_traces(
                                                 textposition='outside',
                                             ).update_layout(
+                                                xaxis_title='Nivel de desarrollo (%)',
                                                 yaxis_title='',
                                                 coloraxis_showscale=False,
                                                 margin=dict(l=0)
