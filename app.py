@@ -73,21 +73,22 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                     cluster_num_comps = cluster_data.shape[0]
                     
                     # Crear un accordion panel para cada cluster.
-                    with ui.accordion_panel(f"Competencias - {cluster_name}"):
-                        with ui.card():
-                            with ui.accordion(id=f'cluster{cluster_id}', open=False):
-                                # Crear un accordion panel para cada competencia en el cluster
-                                for comp in range(1, cluster_num_comps+1):
-                                    competencia_name = cluster_data.competencia[comp-1]
-                                    definicion = cluster_data.definicion[comp-1]
-                                    if pd.notna(cluster_data['descriptor1'][comp-1]):
-                                        with ui.accordion_panel(competencia_name):
-                                            ui.p("Descripción:", style="font-weight: bold;")
-                                            ui.p(definicion, style="text-align: justify;")
-                                            # Create cards para cada descriptor (si no son NaN)
-                                            with ui.card():
-                                                for desc in range(1, 4):
-                                                    INPUTS[f"cl{cluster_id}_comp{comp}_descriptor{desc}"]
+                    if pd.notna(cluster_data['descriptor1'][0]):
+                        with ui.accordion_panel(f"Competencias - {cluster_name}"):
+                            with ui.card():
+                                with ui.accordion(id=f'cluster{cluster_id}', open=False):
+                                    # Crear un accordion panel para cada competencia en el cluster
+                                    for comp in range(1, cluster_num_comps+1):
+                                        if pd.notna(cluster_data['descriptor1'][comp-1]):
+                                            competencia_name = cluster_data.competencia[comp-1]
+                                            definicion = cluster_data.definicion[comp-1]
+                                            with ui.accordion_panel(competencia_name):
+                                                ui.p("Descripción:", style="font-weight: bold;")
+                                                ui.p(definicion, style="text-align: justify;")
+                                                # Create cards para cada descriptor (si no son NaN)
+                                                with ui.card():
+                                                    for desc in range(1, 4):
+                                                        INPUTS[f"cl{cluster_id}_comp{comp}_descriptor{desc}"]
 
         ui.p()
         # Botón para enviar formulario.
@@ -102,12 +103,19 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                             border=None
                             ):  
 
+
                 names = get_worksheet_names()
                 ui.input_select(
                     "select_employee",
                     "Evaluado",
                     names,
                     selected=names[0]
+                )
+
+                ui.input_date(
+                    "date_filter",
+                    "Fecha evaluación",
+                    format="dd-mm-yyyy",
                 )
                 
 
@@ -148,15 +156,21 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                 comps = list(COMPS.values())
                                 df_empty = pd.DataFrame({"Competencia": comps, "Nivel de Desarrollo": 0.0})
                                 return px.bar(df_empty,
-                                            title='Nivel de Desarrollo por Competencia', 
                                             y='Competencia',
                                             x='Nivel de Desarrollo',
                                             text='Nivel de Desarrollo',
                                             range_x=[50, 100],
+                                            category_orders={'Competencia': competence_order},
+                                            color_discrete_sequence=['#4F7CAC'] ,
+                                            color='Nivel de Desarrollo',
+                                            color_continuous_scale='Teal',                         
                                             ).update_traces(
                                                 textposition='outside',
-
-                                            ).update_layout(yaxis_title='')
+                                            ).update_layout(
+                                                yaxis_title='',
+                                                coloraxis_showscale=False,
+                                                margin=dict(l=0)
+                                                ) 
 
                 # with ui.card():
             with ui.layout_columns():
@@ -171,16 +185,22 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
 
                     @render.ui
                     def total():
-                        df_subset = select_data()
-                        # Calculate the average for each competence
-                        avg_df = df_subset.mean().reset_index()  # Reset index to turn it into a DataFrame
-                        avg_df.columns = ['Competencia', 'Nivel de Desarrollo']  # Rename columns for better readability
+                        try:
+                            df_subset = select_data()
+                            # Calculate the average for each competence
+                            avg_df = df_subset.mean().reset_index()  # Reset index to turn it into a DataFrame
+                            avg_df.columns = ['Competencia', 'Nivel de Desarrollo']  # Rename columns for better readability
 
-                        # Remove rows where the average is NaN (if any)
-                        avg_df.dropna(subset=['Nivel de Desarrollo'], inplace=True)         
-                        avg_total = avg_df['Nivel de Desarrollo'].mean()
+                            # Remove rows where the average is NaN (if any)
+                            avg_df.dropna(subset=['Nivel de Desarrollo'], inplace=True)         
+                            avg_total = avg_df['Nivel de Desarrollo'].mean()
 
-                        return f'{(avg_total / 3) * 100:.2f} %'
+                            if pd.notna(avg_total):
+                                return f'{(avg_total / 3) * 100:.2f} %'
+                            else:
+                                return f''
+                        except:
+                            return f''
 
                 with ui.value_box(
                     showcase=faicons.icon_svg("check-double"),
@@ -189,17 +209,20 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                     full_screen=False
                     ):
                     "Competencia para sostener: "
-
+                
                     @render.ui
                     def best_competence():
-                        df_subset = select_data()
-                        # Calculate the average for each competence
-                        df_subset.rename(columns=COMPS, inplace=True)
-                        df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
-                        best_competence = df_melted[df_melted['Nivel de Desarrollo'] == df_melted['Nivel de Desarrollo'].max()]
-                        best_competence_score = df_melted['Nivel de Desarrollo'].max()
-
-                        return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
+                        try:
+                            df_subset = select_data()
+                            # Calculate the average for each competence
+                            df_subset.rename(columns=COMPS, inplace=True)
+                            df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
+                            best_competence = df_melted[df_melted['Nivel de Desarrollo'] == df_melted['Nivel de Desarrollo'].max()]
+                            best_competence_score = df_melted['Nivel de Desarrollo'].max()
+            
+                            return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
+                        except:
+                            return f''
 
                 with ui.value_box(
                     showcase=faicons.icon_svg("stairs"),
@@ -211,15 +234,17 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
 
                     @render.ui
                     def worst_competence():
-                        df_subset = select_data()
-                        # Calculate the average for each competence
-                        df_subset.rename(columns=COMPS, inplace=True)
-                        df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
-                        best_competence = df_melted[df_melted['Nivel de Desarrollo'] == df_melted['Nivel de Desarrollo'].min()]
-                        best_competence_score = df_melted['Nivel de Desarrollo'].min()
+                        try:
+                            df_subset = select_data()
+                            # Calculate the average for each competence
+                            df_subset.rename(columns=COMPS, inplace=True)
+                            df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
+                            best_competence = df_melted[df_melted['Nivel de Desarrollo'] == df_melted['Nivel de Desarrollo'].min()]
+                            best_competence_score = df_melted['Nivel de Desarrollo'].min()
 
-                        return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
-
+                            return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
+                        except:
+                            return f''
                         
                 # with ui.card(): 
                 #     "table"
@@ -233,7 +258,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
 input_validator = None
 
 def select_data():
-    return calculate_competence_averages(input.select_employee())
+    return calculate_competence_averages(input.select_employee(), input.date_filter())
 
 @reactive.effect
 def _():

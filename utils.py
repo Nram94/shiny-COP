@@ -94,10 +94,19 @@ def get_worksheet_names():
     
     return worksheet_list
 
-def calculate_competence_averages(user_name):
+def calculate_competence_averages(user_name, input_date=None):
     try:
-        df = load_user_sheet_google_drive(user_name)
+        df_ = load_user_sheet_google_drive(user_name)
+        df_['created_at'] = pd.to_datetime(df_['created_at'])
 
+        if input_date != None:
+            # Extract month and year from user input
+            target_month = input_date.month
+            target_year = input_date.year
+
+            df = df_[(df_['created_at'].dt.month == target_month) & (df_['created_at'].dt.year == target_year)]
+        else:
+            df = df_.copy()
         # Extract relevant columns (those that start with 'cl')
         comp_columns = [col for col in df.columns if col.startswith('cl')]
         df[comp_columns] = df[comp_columns].apply(pd.to_numeric, errors='coerce')
@@ -140,6 +149,7 @@ def calculate_competence_averages(user_name):
         # Create a DataFrame with a single row for the weighted averages
         avg_df = pd.DataFrame([final_averages])
     except Exception as e:
+         print(e)
          avg_df = pd.DataFrame()
     
     
