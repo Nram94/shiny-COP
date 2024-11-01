@@ -7,7 +7,7 @@ from shiny import reactive
 from shiny.express import input, ui, render
 from shiny_validate import InputValidator, check
 from shinywidgets import render_plotly
-from data_import import competencias, INPUTS, WEIGHTS, COMPS
+from data_import import competencias, INPUTS, COMPS
 from utils import save_to_google_drive, get_worksheet_names, calculate_competence_averages
 
 
@@ -50,7 +50,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                     with ui.card():
                         with ui.accordion(id='cluster1', open=False):
                             # Loop through competencies to reduce repetition
-                            for i, competencia in enumerate(competencias.competencia[0:2]):
+                            for i, competencia in enumerate(competencias.competencia[0:3]):
                                 with ui.accordion_panel(competencia):
                                     ui.p("Descripción:")
                                     ui.p(competencias.definicion[i], style="text-align: justify;")
@@ -98,6 +98,41 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
         )
 
     with ui.nav_panel("Análisis de Desempeño"):
+        # # valid username and password
+        # valid_username = "username"
+        # valid_password = "password"
+
+        # # Reactive value to track login status
+        # login_status = reactive.value(True)
+
+        # @render.ui
+        # def login_form():
+        #     if not login_status():
+        #         return ui.div(
+        #             ui.input_text("username", "Username"),
+        #             ui.input_password("password", "Password"),
+        #             ui.input_action_button("login", "Login"),
+        #         )
+        #     else:
+        #         return ui.div()
+
+        # # Handle the login button click
+        # @reactive.effect
+        # @reactive.event(input.login)
+        # def handle_login():
+        #     if input.username() == valid_username and input.password() == valid_password:
+        #         login_status.set(True)
+        #     else:
+        #         login_status.set(False)
+
+        # # Render login message
+        # @render.ui
+        # def login_message():
+        #     if login_status():
+        #         return ui.p("Login successful! Here's your plot:")
+        #     else:
+        #         return ui.p("Please log in to see the plot.")
+
         with ui.layout_sidebar(style="margin-right: -10%; margin-left=0px; padding-left=0px;"):
             with ui.sidebar(bg="#37465d", style="color: white;",
                             border=None
@@ -247,20 +282,78 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                             return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
                         except:
                             return f''
-                        
-                # with ui.card(): 
-                #     "table"
-                #     @render.data_frame
-                #     def data_f():
-                #         df_subset_table = load_from_google_drive()
-                #         return df_subset_table.head() 
-
+                    
 
 # Requerido para que InputValidator funcione en Express
 input_validator = None
 
 def select_data():
     return calculate_competence_averages(input.select_employee(), input.date_filter())
+           
+
+
+    
+
+def plot_competences():
+    try:
+        df_subset = select_data()  # Function to retrieve relevant data
+        if df_subset.empty:
+            raise ValueError("No data available for plotting.")
+
+        df_subset.rename(columns=COMPS, inplace=True)
+        df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
+        df_melted['Nivel de Desarrollo'] = (df_melted['Nivel de Desarrollo'] / 3) * 100
+        df_melted['Nivel de Desarrollo'] = df_melted['Nivel de Desarrollo'].round(2)
+        df_melted.dropna(subset=['Nivel de Desarrollo'], inplace=True)
+
+        if df_melted.empty:
+            raise ValueError("No valid competencies available.")
+
+        competence_order = df_melted['Competencia'].unique().tolist()
+        fig = px.bar(df_melted,
+                     y='Competencia',
+                     x='Nivel de Desarrollo',
+                     text='Nivel de Desarrollo',
+                     range_x=[50, 100],
+                     category_orders={'Competencia': competence_order},
+                     color_discrete_sequence=['#4F7CAC'],
+                     color='Nivel de Desarrollo',
+                     color_continuous_scale='Teal')
+        
+        fig.update_traces(textposition='outside')
+        fig.update_layout(
+            xaxis_title='Nivel de desarrollo (%)',
+            yaxis_title='',
+            coloraxis_showscale=False,
+            margin=dict(l=0)
+        )
+
+        return fig
+    
+    except Exception as e:
+        print(f"Error in plot_competences: {str(e)} ({type(e)})")  # Log the error
+        comps = list(COMPS.values())
+        df_empty = pd.DataFrame({"Competencia": comps, "Nivel de Desarrollo": 0.0})
+        
+        fig = px.bar(df_empty,
+                     y='Competencia',
+                     x='Nivel de Desarrollo',
+                     text='Nivel de Desarrollo',
+                     range_x=[50, 100],
+                     category_orders={'Competencia': comps},
+                     color_discrete_sequence=['#4F7CAC'],
+                     color='Nivel de Desarrollo',
+                     color_continuous_scale='Teal')
+        
+        fig.update_traces(textposition='outside')
+        fig.update_layout(
+            xaxis_title='Nivel de desarrollo (%)',
+            yaxis_title='',
+            coloraxis_showscale=False,
+            margin=dict(l=0)
+        )
+
+        return fig
 
 @reactive.effect
 def _():

@@ -149,7 +149,7 @@ def calculate_competence_averages(user_name, input_date=None):
         # Create a DataFrame with a single row for the weighted averages
         avg_df = pd.DataFrame([final_averages])
     except Exception as e:
-         print(e)
+        #  print(e)
          avg_df = pd.DataFrame()
     
     
