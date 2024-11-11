@@ -3,7 +3,7 @@ import faicons
 from pathlib import Path
 import pandas as pd
 import plotly.express as px
-from shiny import reactive
+from shiny import reactive, req
 from shiny.express import input, ui, render
 from shiny_validate import InputValidator, check
 from shinywidgets import render_plotly
@@ -55,10 +55,8 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                     ui.p("Descripción:")
                                     ui.p(competencias.definicion[i], style="text-align: justify;")
                                     with ui.card():
-                                        # Loop through descriptors for each competencia
-                                        for j in range(1, 4):
-                                            descriptor_id = f'cl1_comp{i+1}_descriptor{j}'
-                                            INPUTS[descriptor_id]   
+                                        comp_descriptors = f'cl1_comp{i+1}_descriptors'
+                                        INPUTS[comp_descriptors]   
 
         ### Panel condicional de todos los cargos para desplegar paneles de competencia de acuerdo al cargo.
         with ui.panel_conditional(f"['Director', 'Analista', 'Médico', 'Auxiliar'].includes(input.cargo_evaluado) || ['Director', 'Analista', 'Auxiliar'].includes(input.cargo_evaluado_auto)"):
@@ -66,6 +64,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                 # Obtener clusters únicos
                 clusters = competencias["cluster"].unique()
                 clusters = clusters[1:]
+                
                 # Crear la UI basada en clusters, competencias y descriptores
                 for cluster_id in clusters:
                     cluster_data = competencias[competencias["cluster"] == cluster_id].reset_index()
@@ -87,58 +86,46 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                                 ui.p(definicion, style="text-align: justify;")
                                                 # Create cards para cada descriptor (si no son NaN)
                                                 with ui.card():
-                                                    for desc in range(1, 4):
-                                                        INPUTS[f"cl{cluster_id}_comp{comp}_descriptor{desc}"]
-
+                                                    INPUTS[f"cl{cluster_id}_comp{comp}_descriptors"]
         ui.p()
         # Botón para enviar formulario.
         ui.div(
             ui.input_action_button("enviar", "Enviar", class_="btn btn-primary"),
             class_="d-flex justify-content-end",
         )
+        
 
     with ui.nav_panel("Análisis de Desempeño"):
-        # # valid username and password
-        # valid_username = "username"
-        # valid_password = "password"
+        # valid username and password
+        valid_username = "username"
+        valid_password = "password"
 
-        # # Reactive value to track login status
-        # login_status = reactive.value(True)
+        # Reactive value to track login status
+        login_status = reactive.value(False)
 
-        # @render.ui
-        # def login_form():
-        #     if not login_status():
-        #         return ui.div(
-        #             ui.input_text("username", "Username"),
-        #             ui.input_password("password", "Password"),
-        #             ui.input_action_button("login", "Login"),
-        #         )
-        #     else:
-        #         return ui.div()
+        @render.ui
+        def login_form():
+            if not login_status():
+                return ui.div(
+                    ui.input_text("username", "Username"),
+                    ui.input_password("password", "Password"),
+                    ui.input_action_button("login", "Login"),
+                )
+            else:
+                return ui.div()
 
-        # # Handle the login button click
-        # @reactive.effect
-        # @reactive.event(input.login)
-        # def handle_login():
-        #     if input.username() == valid_username and input.password() == valid_password:
-        #         login_status.set(True)
-        #     else:
-        #         login_status.set(False)
-
-        # # Render login message
-        # @render.ui
-        # def login_message():
-        #     if login_status():
-        #         return ui.p("Login successful! Here's your plot:")
-        #     else:
-        #         return ui.p("Please log in to see the plot.")
+        # Handle the login button click
+        @reactive.effect
+        @reactive.event(input.login)
+        def handle_login():
+            if input.username() == valid_username and input.password() == valid_password:
+                login_status.set(True)
+            else:
+                login_status.set(False)
 
         with ui.layout_sidebar(style="margin-right: -10%; margin-left=0px; padding-left=0px;"):
             with ui.sidebar(bg="#37465d", style="color: white;",
-                            border=None
-                            ):  
-
-
+                            border=None):  
                 names = get_worksheet_names()
                 ui.input_select(
                     "select_employee",
@@ -152,9 +139,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                     "Fecha evaluación",
                     format="dd-mm-yyyy",
                 )
-                
 
-            # with ui.layout_columns():
             with ui.accordion(open=False):
                 with ui.accordion_panel("Nivel de Desarrollo por Competencia"):
                     with ui.card():
@@ -174,7 +159,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                             y='Competencia',
                                             x='Nivel de Desarrollo',
                                             text='Nivel de Desarrollo',
-                                            range_x=[50, 100],
+                                            range_x=[30, 100],
                                             category_orders={'Competencia': competence_order},
                                             color_discrete_sequence=['#4F7CAC'] ,
                                             color='Nivel de Desarrollo',
@@ -195,7 +180,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                             y='Competencia',
                                             x='Nivel de Desarrollo',
                                             text='Nivel de Desarrollo',
-                                            range_x=[50, 100],
+                                            range_x=[30, 100],
                                             category_orders={'Competencia': competence_order},
                                             color_discrete_sequence=['#4F7CAC'] ,
                                             color='Nivel de Desarrollo',
@@ -209,9 +194,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                                 margin=dict(l=0)
                                                 ) 
 
-                # with ui.card():
             with ui.layout_columns():
-            # with ui.accordion_panel("Nivel de Desarrollo por Competencia"):
                 with ui.value_box(
                     showcase=faicons.icon_svg("list-check"),
                     theme="orange",
@@ -282,110 +265,63 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                             return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
                         except:
                             return f''
-                    
 
-# Requerido para que InputValidator funcione en Express
-input_validator = None
 
 def select_data():
     return calculate_competence_averages(input.select_employee(), input.date_filter())
-           
 
-
-    
-
-def plot_competences():
-    try:
-        df_subset = select_data()  # Function to retrieve relevant data
-        if df_subset.empty:
-            raise ValueError("No data available for plotting.")
-
-        df_subset.rename(columns=COMPS, inplace=True)
-        df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
-        df_melted['Nivel de Desarrollo'] = (df_melted['Nivel de Desarrollo'] / 3) * 100
-        df_melted['Nivel de Desarrollo'] = df_melted['Nivel de Desarrollo'].round(2)
-        df_melted.dropna(subset=['Nivel de Desarrollo'], inplace=True)
-
-        if df_melted.empty:
-            raise ValueError("No valid competencies available.")
-
-        competence_order = df_melted['Competencia'].unique().tolist()
-        fig = px.bar(df_melted,
-                     y='Competencia',
-                     x='Nivel de Desarrollo',
-                     text='Nivel de Desarrollo',
-                     range_x=[50, 100],
-                     category_orders={'Competencia': competence_order},
-                     color_discrete_sequence=['#4F7CAC'],
-                     color='Nivel de Desarrollo',
-                     color_continuous_scale='Teal')
-        
-        fig.update_traces(textposition='outside')
-        fig.update_layout(
-            xaxis_title='Nivel de desarrollo (%)',
-            yaxis_title='',
-            coloraxis_showscale=False,
-            margin=dict(l=0)
-        )
-
-        return fig
-    
-    except Exception as e:
-        print(f"Error in plot_competences: {str(e)} ({type(e)})")  # Log the error
-        comps = list(COMPS.values())
-        df_empty = pd.DataFrame({"Competencia": comps, "Nivel de Desarrollo": 0.0})
-        
-        fig = px.bar(df_empty,
-                     y='Competencia',
-                     x='Nivel de Desarrollo',
-                     text='Nivel de Desarrollo',
-                     range_x=[50, 100],
-                     category_orders={'Competencia': comps},
-                     color_discrete_sequence=['#4F7CAC'],
-                     color='Nivel de Desarrollo',
-                     color_continuous_scale='Teal')
-        
-        fig.update_traces(textposition='outside')
-        fig.update_layout(
-            xaxis_title='Nivel de desarrollo (%)',
-            yaxis_title='',
-            coloraxis_showscale=False,
-            margin=dict(l=0)
-        )
-
-        return fig
-
+# Requerido para que InputValidator funcione en Express
+input_validator = None
 @reactive.effect
 def _():
 # Agregar validaciones a cada input según sea neceario.
     global input_validator
     input_validator = InputValidator()
+    
+    # Core fields that should always be required
     input_validator.add_rule("name_evaluador", check.required(message="Campo requerido"))
     input_validator.add_rule("rol_evaluador", check.required(message="Campo requerido"))
+
+    # Conditional rule based on rol_evaluador
     if input.rol_evaluador() == "Autoevaluación":
-        input_validator.add_rule("cargo_evaluado_auto", check.required(message="Campo requerido")) 
+        input_validator.add_rule("cargo_evaluado_auto", check.required(message="Campo requerido"))
     else:
         input_validator.add_rule("name_evaluado", check.required(message="Campo requerido"))
         input_validator.add_rule("cargo_evaluado", check.required(message="Campo requerido"))
 
-    if input.cargo_evaluado() == "Auxiliar" or input.cargo_evaluado_auto() == "Auxiliar":
-        for key, input_widget in INPUTS.items():
-            if not("cl1" in key):
-                if ("descriptor" in key):
-                    input_validator.add_rule(key, check.required(message="Campo requerido"))    
-    else:
-        for key, input_widget in INPUTS.items():
-            if ("descriptor" in key):
-                input_validator.add_rule(key, check.required(message="Campo requerido")) 
+    # # Debugging: Check if 'rol_evaluador' and 'cargo_evaluado' inputs are accessible
+    # print("rol_evaluador:", input.rol_evaluador())
+    # print("cargo_evaluado:", input.cargo_evaluado() if 'cargo_evaluado' in input else "Not available")
 
+    # # Add validation for descriptors, skipping empty or placeholder radio buttons
+    # for key in INPUTS.keys():
+    #     if 'id' in INPUTS[key].attrs:
+    #         print(INPUTS[key].attrs['id'])
+    # if input.cargo_evaluado() == "Auxiliar" or input.cargo_evaluado_auto() == "Auxiliar":
+    #     for key in INPUTS.keys():
+    #         if 'id' in INPUTS[key].attrs:
+    #             if not("cl1" in INPUTS[key].attrs['id']):
+    #                 if ("descriptors" in INPUTS[key].attrs['id']):
+    #                     print(key)
+    #                     input_validator.add_rule(INPUTS[key].attrs['id'], check.required(message="Campo requerido"))    
+    # else:
+    #     for key in INPUTS.keys():
+    #         if 'id' in INPUTS[key].attrs:
+    #             if ("descriptors" in INPUTS[key].attrs['id']):
+    #                 input_validator.add_rule(INPUTS[key].attrs['id'], check.required(message="Campo requerido")) 
+   
+
+    # input_validator.enable()
 
 # Efecto y mensaje de salida cuando se envié el fomrulario usando Enviar.
 @reactive.effect
 @reactive.event(input.enviar)
 def save_to_csv():
+    
     input_validator.enable()
-    if not input_validator.is_valid():
-        ui.modal_show(ui.modal("Error: Entradas inválidas. Por favor revise sus respuestas e intente nuevamente."))
+    if not input_validator.is_valid(): 
+        ui.modal_show(ui.modal("Error: Entradas inválidas. Por favor revise sus respuestas e intente nuevamente.",
+                      footer=ui.modal_button("Cerrar", id="close_modal")))
         return
 
     column_names = list(INPUTS.keys())
@@ -409,11 +345,14 @@ def save_to_csv():
                     value = input[k]()  # Fetch the input value
                     if value is None:
                         pass
+                    elif "_descriptors" in k:
+                        value = value[0]
+                    
                         # print(f"Warning: Input '{k}' is None.")
                     input_data[k] = value
                 except Exception as e:
                     # print(f"Error accessing input '{k}': {e}")
-                    ui.modal_show(ui.modal(f"Error accediendo a la entrada '{k}'."))
+                    ui.modal_show(ui.modal(f"Error accediendo a la entrada '{k}':{e}."))
                     return
             else:
                 # Input does not exist, you can choose to omit it or handle it differently
@@ -434,7 +373,8 @@ def save_to_csv():
         else:
             save_to_google_drive(df_row, input_data['name_evaluado'])
         # Show success message
-        ui.modal_show(ui.modal("Evaluación enviada, ¡Gracias!"))
+        ui.modal_show(ui.modal("Evaluación enviada, ¡Gracias!",
+                               footer=ui.modal_button("Cerrar", id="close_modal")))
 
 
     except Exception as e:
