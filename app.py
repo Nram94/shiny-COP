@@ -96,33 +96,6 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
         
 
     with ui.nav_panel("Análisis de Desempeño"):
-        # valid username and password
-        valid_username = "username"
-        valid_password = "password"
-
-        # Reactive value to track login status
-        login_status = reactive.value(False)
-
-        @render.ui
-        def login_form():
-            if not login_status():
-                return ui.div(
-                    ui.input_text("username", "Username"),
-                    ui.input_password("password", "Password"),
-                    ui.input_action_button("login", "Login"),
-                )
-            else:
-                return ui.div()
-
-        # Handle the login button click
-        @reactive.effect
-        @reactive.event(input.login)
-        def handle_login():
-            if input.username() == valid_username and input.password() == valid_password:
-                login_status.set(True)
-            else:
-                login_status.set(False)
-
         with ui.layout_sidebar(style="margin-right: -10%; margin-left=0px; padding-left=0px;"):
             with ui.sidebar(bg="#37465d", style="color: white;",
                             border=None):  
