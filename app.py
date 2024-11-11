@@ -1,5 +1,7 @@
 from datetime import datetime
+from dotenv import load_dotenv
 import faicons
+import os
 from pathlib import Path
 import pandas as pd
 import plotly.express as px
@@ -96,148 +98,185 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
         
 
     with ui.nav_panel("Análisis de Desempeño"):
-        with ui.layout_sidebar(style="margin-right: -10%; margin-left=0px; padding-left=0px;"):
-            with ui.sidebar(bg="#37465d", style="color: white;",
-                            border=None):  
-                names = get_worksheet_names()
-                ui.input_select(
-                    "select_employee",
-                    "Evaluado",
-                    names,
-                    selected=names[0]
-                )
+        load_dotenv()
+        # valid username and password
+        valid_username = os.getenv("VALID_USERNAME")
+        valid_password = os.getenv("VALID_PASSWORD")
 
-                ui.input_date(
-                    "date_filter",
-                    "Fecha evaluación",
-                    format="dd-mm-yyyy",
-                )
+        # Reactive value to track login status
+        login_status = reactive.value(False)
+        # Hidden input to sync login status with the frontend
+        ui.div(ui.input_text("login_status", None, value=""), style="display:none;")
 
-            with ui.accordion(open=False):
-                with ui.accordion_panel("Nivel de Desarrollo por Competencia"):
-                    with ui.card():
-                        @render_plotly
-                        def plot_competences():
+        @render.ui
+        def login_form():
+            if not login_status():
+                return ui.div(
+                    ui.input_text("username", "Username"),
+                    ui.input_password("password", "Password"),
+                    ui.input_action_button("login", "Login"),
+                )
+            else:
+                return ui.div()
+
+        # Handle the login button click
+        @reactive.effect
+        @reactive.event(input.login)
+        def handle_login():
+            if input.username() == valid_username and input.password() == valid_password:
+                login_status.set(True)
+                ui.update_text("login_status", value="logged_in")
+            else:
+                login_status.set(False)
+                ui.update_text("login_status", value="")
+                ui.modal_show(ui.modal("Ingrese un usuario y/o contraseña válidos.",
+                              footer=ui.modal_button("Cerrar", id="close_modal")))
+
+        
+        with ui.panel_conditional("['logged_in'].includes(input.login_status)"):
+                   
+            with ui.layout_sidebar(style="margin-right: -10%; margin-left=0px; padding-left=0px;"):
+                with ui.sidebar(bg="#37465d", style="color: white;",
+                                border=None):  
+                    names = get_worksheet_names()
+                    ui.input_select(
+                        "select_employee",
+                        "Evaluado",
+                        names,
+                        selected=names[0]
+                    )
+
+                    ui.input_date(
+                        "date_filter",
+                        "Fecha evaluación",
+                        format="dd-mm-yyyy",
+                    )
+
+                with ui.accordion(open=False):
+                    with ui.accordion_panel("Nivel de Desarrollo por Competencia"):
+                        with ui.card():
+                            @render_plotly
+                            def plot_competences():
+                                try:
+                                    df_subset = select_data()
+                                    df_subset.rename(columns=COMPS, inplace=True)
+                                    df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
+                                    df_melted['Nivel de Desarrollo'] = (df_melted['Nivel de Desarrollo'] / 3)*100
+                                    df_melted['Nivel de Desarrollo'] = df_melted['Nivel de Desarrollo'].round(2)
+                                    # Drop NaN values (which represent empty entries)
+                                    df_melted.dropna(subset=['Nivel de Desarrollo'], inplace=True)
+                                    # Maintain the original order of the competencies
+                                    competence_order = df_melted['Competencia'].unique().tolist()  # Get the order of non-NaN competencies
+                                    return px.bar(df_melted,
+                                                y='Competencia',
+                                                x='Nivel de Desarrollo',
+                                                text='Nivel de Desarrollo',
+                                                range_x=[30, 100],
+                                                category_orders={'Competencia': competence_order},
+                                                color_discrete_sequence=['#4F7CAC'] ,
+                                                color='Nivel de Desarrollo',
+                                                color_continuous_scale='Teal',                         
+                                                ).update_traces(
+                                                    textposition='outside',
+                                                ).update_layout(
+                                                    xaxis_title='Nivel de desarrollo (%)',
+                                                    yaxis_title='',
+                                                    coloraxis_showscale=False,
+                                                    margin=dict(l=0)
+                                                    ) 
+
+                                except:
+                                    comps = list(COMPS.values())
+                                    df_empty = pd.DataFrame({"Competencia": comps, "Nivel de Desarrollo": 0.0})
+                                    return px.bar(df_empty,
+                                                y='Competencia',
+                                                x='Nivel de Desarrollo',
+                                                text='Nivel de Desarrollo',
+                                                range_x=[30, 100],
+                                                category_orders={'Competencia': competence_order},
+                                                color_discrete_sequence=['#4F7CAC'] ,
+                                                color='Nivel de Desarrollo',
+                                                color_continuous_scale='Teal',                         
+                                                ).update_traces(
+                                                    textposition='outside',
+                                                ).update_layout(
+                                                    xaxis_title='Nivel de desarrollo (%)',
+                                                    yaxis_title='',
+                                                    coloraxis_showscale=False,
+                                                    margin=dict(l=0)
+                                                    ) 
+
+                with ui.layout_columns():
+                    with ui.value_box(
+                        showcase=faicons.icon_svg("list-check"),
+                        theme="orange",
+                        showcase_layout="left center",
+                        full_screen=False
+                        ):
+                        "Nivel de Desarrollo Total:"
+
+                        @render.ui
+                        def total():
                             try:
                                 df_subset = select_data()
+                                # Calculate the average for each competence
+                                avg_df = df_subset.mean().reset_index()  # Reset index to turn it into a DataFrame
+                                avg_df.columns = ['Competencia', 'Nivel de Desarrollo']  # Rename columns for better readability
+
+                                # Remove rows where the average is NaN (if any)
+                                avg_df.dropna(subset=['Nivel de Desarrollo'], inplace=True)         
+                                avg_total = avg_df['Nivel de Desarrollo'].mean()
+
+                                if pd.notna(avg_total):
+                                    return f'{(avg_total / 3) * 100:.2f} %'
+                                else:
+                                    return f''
+                            except:
+                                return f''
+
+                    with ui.value_box(
+                        showcase=faicons.icon_svg("check-double"),
+                        theme="light",
+                        showcase_layout="left center",
+                        full_screen=False
+                        ):
+                        "Competencia para sostener: "
+                    
+                        @render.ui
+                        def best_competence():
+                            try:
+                                df_subset = select_data()
+                                # Calculate the average for each competence
                                 df_subset.rename(columns=COMPS, inplace=True)
                                 df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
-                                df_melted['Nivel de Desarrollo'] = (df_melted['Nivel de Desarrollo'] / 3)*100
-                                df_melted['Nivel de Desarrollo'] = df_melted['Nivel de Desarrollo'].round(2)
-                                # Drop NaN values (which represent empty entries)
-                                df_melted.dropna(subset=['Nivel de Desarrollo'], inplace=True)
-                                # Maintain the original order of the competencies
-                                competence_order = df_melted['Competencia'].unique().tolist()  # Get the order of non-NaN competencies
-                                return px.bar(df_melted,
-                                            y='Competencia',
-                                            x='Nivel de Desarrollo',
-                                            text='Nivel de Desarrollo',
-                                            range_x=[30, 100],
-                                            category_orders={'Competencia': competence_order},
-                                            color_discrete_sequence=['#4F7CAC'] ,
-                                            color='Nivel de Desarrollo',
-                                            color_continuous_scale='Teal',                         
-                                            ).update_traces(
-                                                textposition='outside',
-                                            ).update_layout(
-                                                xaxis_title='Nivel de desarrollo (%)',
-                                                yaxis_title='',
-                                                coloraxis_showscale=False,
-                                                margin=dict(l=0)
-                                                ) 
-
-                            except:
-                                comps = list(COMPS.values())
-                                df_empty = pd.DataFrame({"Competencia": comps, "Nivel de Desarrollo": 0.0})
-                                return px.bar(df_empty,
-                                            y='Competencia',
-                                            x='Nivel de Desarrollo',
-                                            text='Nivel de Desarrollo',
-                                            range_x=[30, 100],
-                                            category_orders={'Competencia': competence_order},
-                                            color_discrete_sequence=['#4F7CAC'] ,
-                                            color='Nivel de Desarrollo',
-                                            color_continuous_scale='Teal',                         
-                                            ).update_traces(
-                                                textposition='outside',
-                                            ).update_layout(
-                                                xaxis_title='Nivel de desarrollo (%)',
-                                                yaxis_title='',
-                                                coloraxis_showscale=False,
-                                                margin=dict(l=0)
-                                                ) 
-
-            with ui.layout_columns():
-                with ui.value_box(
-                    showcase=faicons.icon_svg("list-check"),
-                    theme="orange",
-                    showcase_layout="left center",
-                    full_screen=False
-                    ):
-                    "Nivel de Desarrollo Total:"
-
-                    @render.ui
-                    def total():
-                        try:
-                            df_subset = select_data()
-                            # Calculate the average for each competence
-                            avg_df = df_subset.mean().reset_index()  # Reset index to turn it into a DataFrame
-                            avg_df.columns = ['Competencia', 'Nivel de Desarrollo']  # Rename columns for better readability
-
-                            # Remove rows where the average is NaN (if any)
-                            avg_df.dropna(subset=['Nivel de Desarrollo'], inplace=True)         
-                            avg_total = avg_df['Nivel de Desarrollo'].mean()
-
-                            if pd.notna(avg_total):
-                                return f'{(avg_total / 3) * 100:.2f} %'
-                            else:
-                                return f''
-                        except:
-                            return f''
-
-                with ui.value_box(
-                    showcase=faicons.icon_svg("check-double"),
-                    theme="light",
-                    showcase_layout="left center",
-                    full_screen=False
-                    ):
-                    "Competencia para sostener: "
+                                best_competence = df_melted[df_melted['Nivel de Desarrollo'] == df_melted['Nivel de Desarrollo'].max()]
+                                best_competence_score = df_melted['Nivel de Desarrollo'].max()
                 
-                    @render.ui
-                    def best_competence():
-                        try:
-                            df_subset = select_data()
-                            # Calculate the average for each competence
-                            df_subset.rename(columns=COMPS, inplace=True)
-                            df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
-                            best_competence = df_melted[df_melted['Nivel de Desarrollo'] == df_melted['Nivel de Desarrollo'].max()]
-                            best_competence_score = df_melted['Nivel de Desarrollo'].max()
-            
-                            return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
-                        except:
-                            return f''
+                                return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
+                            except:
+                                return f''
 
-                with ui.value_box(
-                    showcase=faicons.icon_svg("stairs"),
-                    theme="secondary",
-                    showcase_layout="left center",
-                    full_screen=False
-                    ):
-                    "Competencia para fortalecer: "
+                    with ui.value_box(
+                        showcase=faicons.icon_svg("stairs"),
+                        theme="secondary",
+                        showcase_layout="left center",
+                        full_screen=False
+                        ):
+                        "Competencia para fortalecer: "
 
-                    @render.ui
-                    def worst_competence():
-                        try:
-                            df_subset = select_data()
-                            # Calculate the average for each competence
-                            df_subset.rename(columns=COMPS, inplace=True)
-                            df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
-                            best_competence = df_melted[df_melted['Nivel de Desarrollo'] == df_melted['Nivel de Desarrollo'].min()]
-                            best_competence_score = df_melted['Nivel de Desarrollo'].min()
+                        @render.ui
+                        def worst_competence():
+                            try:
+                                df_subset = select_data()
+                                # Calculate the average for each competence
+                                df_subset.rename(columns=COMPS, inplace=True)
+                                df_melted = pd.melt(df_subset, var_name='Competencia', value_name='Nivel de Desarrollo')
+                                best_competence = df_melted[df_melted['Nivel de Desarrollo'] == df_melted['Nivel de Desarrollo'].min()]
+                                best_competence_score = df_melted['Nivel de Desarrollo'].min()
 
-                            return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
-                        except:
-                            return f''
+                                return f'{best_competence["Competencia"].values[0]}\n {(best_competence_score / 3) * 100:.2f} %'
+                            except:
+                                return f''
 
 
 def select_data():
