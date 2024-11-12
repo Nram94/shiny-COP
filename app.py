@@ -97,7 +97,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
         )
         
 
-    with ui.nav_panel("Análisis de Desempeño"):
+    with ui.nav_panel(title="Análisis de Desempeño"):
         load_dotenv()
         # valid username and password
         valid_username = os.getenv("VALID_USERNAME")
@@ -112,12 +112,12 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
         def login_form():
             if not login_status():
                 return ui.div(
-                    ui.input_text("username", "Username"),
-                    ui.input_password("password", "Password"),
-                    ui.input_action_button("login", "Login"),
+                    ui.input_text("username", "Usuario"),
+                    ui.input_password("password", "Contraseña"),
+                    ui.input_action_button("login", "Ingresar"),
                 )
             else:
-                return ui.div()
+                return ui.div(style='display:none')
 
         # Handle the login button click
         @reactive.effect
@@ -133,8 +133,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                               footer=ui.modal_button("Cerrar", id="close_modal")))
 
         
-        with ui.panel_conditional("['logged_in'].includes(input.login_status)"):
-                   
+        with ui.panel_conditional(f"['logged_in'].includes(input.login_status)"):    
             with ui.layout_sidebar(style="margin-right: -10%; margin-left=0px; padding-left=0px;"):
                 with ui.sidebar(bg="#37465d", style="color: white;",
                                 border=None):  
