@@ -12,7 +12,8 @@ from shinywidgets import render_plotly
 from data_import import competencias, INPUTS, COMPS
 from utils import save_to_google_drive, get_worksheet_names, calculate_competence_averages
 
-
+### Cargad dotenv
+load_dotenv()
 ### Obtener ruta de la app.
 app_dir = Path(__file__).parent
 
@@ -98,7 +99,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
         
 
     with ui.nav_panel(title="Análisis de Desempeño"):
-        load_dotenv()
+        
         # valid username and password
         valid_username = os.getenv("VALID_USERNAME")
         valid_password = os.getenv("VALID_PASSWORD")
