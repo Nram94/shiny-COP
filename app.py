@@ -2,17 +2,20 @@ from datetime import datetime
 from dotenv import load_dotenv
 import faicons
 import os
+import numpy as np
 from pathlib import Path
 import pandas as pd
 import plotly.express as px
-from shiny import reactive, req
+from shiny import reactive
 from shiny.express import input, ui, render
 from shiny_validate import InputValidator, check
 from shinywidgets import render_plotly
 from data_import import competencias, INPUTS, COMPS
 from utils import save_to_google_drive, get_worksheet_names, calculate_competence_averages
 
-### Cargad dotenv
+
+
+### Carga dotenv
 load_dotenv()
 ### Obtener ruta de la app.
 app_dir = Path(__file__).parent
@@ -22,6 +25,7 @@ css_path = app_dir / "styles.css"
 ### Título de la app
 ui.include_css(css_path)
 ui.page_opts(window_title="Evaluación de Desempeño")
+
 
 with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desempeno", bg='#37465d',
                    position='fixed-top', padding="70px"):
@@ -53,7 +57,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                     with ui.card():
                         with ui.accordion(id='cluster1', open=False):
                             # Loop through competencies to reduce repetition
-                            for i, competencia in enumerate(competencias.competencia[0:3]):
+                            for i, competencia in enumerate(competencias.competencia[0:4]):
                                 with ui.accordion_panel(competencia):
                                     ui.p("Descripción:")
                                     ui.p(competencias.definicion[i], style="text-align: justify;")
@@ -61,8 +65,9 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                         comp_descriptors = f'cl1_comp{i+1}_descriptors'
                                         INPUTS[comp_descriptors]   
 
+
         ### Panel condicional de todos los cargos para desplegar paneles de competencia de acuerdo al cargo.
-        with ui.panel_conditional(f"['Director', 'Analista', 'Médico', 'Auxiliar'].includes(input.cargo_evaluado) || ['Director', 'Analista', 'Auxiliar'].includes(input.cargo_evaluado_auto)"):
+        with ui.panel_conditional(f"['Director', 'Analista', 'Médico', 'Auxiliar'].includes(input.cargo_evaluado) || ['Director', 'Analista', 'Médico', 'Auxiliar'].includes(input.cargo_evaluado_auto)"):
             with ui.accordion(id='comp2', open=False, style='margin-top:-26px'):
                 # Obtener clusters únicos
                 clusters = competencias["cluster"].unique()
@@ -73,7 +78,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                     cluster_data = competencias[competencias["cluster"] == cluster_id].reset_index()
                     cluster_name = cluster_data["clusterName"].iloc[0]
                     cluster_num_comps = cluster_data.shape[0]
-                    
+                
                     # Crear un accordion panel para cada cluster.
                     if pd.notna(cluster_data['descriptor1'][0]):
                         with ui.accordion_panel(f"Competencias - {cluster_name}"):
@@ -90,6 +95,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                                 # Create cards para cada descriptor (si no son NaN)
                                                 with ui.card():
                                                     INPUTS[f"cl{cluster_id}_comp{comp}_descriptors"]
+
         ui.p()
         # Botón para enviar formulario.
         ui.div(
@@ -279,6 +285,9 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                 return f''
 
 
+
+
+
 def select_data():
     return calculate_competence_averages(input.select_employee(), input.date_filter())
 
@@ -300,30 +309,6 @@ def _():
     else:
         input_validator.add_rule("name_evaluado", check.required(message="Campo requerido"))
         input_validator.add_rule("cargo_evaluado", check.required(message="Campo requerido"))
-
-    # # Debugging: Check if 'rol_evaluador' and 'cargo_evaluado' inputs are accessible
-    # print("rol_evaluador:", input.rol_evaluador())
-    # print("cargo_evaluado:", input.cargo_evaluado() if 'cargo_evaluado' in input else "Not available")
-
-    # # Add validation for descriptors, skipping empty or placeholder radio buttons
-    # for key in INPUTS.keys():
-    #     if 'id' in INPUTS[key].attrs:
-    #         print(INPUTS[key].attrs['id'])
-    # if input.cargo_evaluado() == "Auxiliar" or input.cargo_evaluado_auto() == "Auxiliar":
-    #     for key in INPUTS.keys():
-    #         if 'id' in INPUTS[key].attrs:
-    #             if not("cl1" in INPUTS[key].attrs['id']):
-    #                 if ("descriptors" in INPUTS[key].attrs['id']):
-    #                     print(key)
-    #                     input_validator.add_rule(INPUTS[key].attrs['id'], check.required(message="Campo requerido"))    
-    # else:
-    #     for key in INPUTS.keys():
-    #         if 'id' in INPUTS[key].attrs:
-    #             if ("descriptors" in INPUTS[key].attrs['id']):
-    #                 input_validator.add_rule(INPUTS[key].attrs['id'], check.required(message="Campo requerido")) 
-   
-
-    # input_validator.enable()
 
 # Efecto y mensaje de salida cuando se envié el fomrulario usando Enviar.
 @reactive.effect

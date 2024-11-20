@@ -158,5 +158,3 @@ def calculate_competence_averages(user_name, input_date=None):
     return avg_df
 
 
-
-

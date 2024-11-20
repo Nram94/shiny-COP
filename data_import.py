@@ -65,11 +65,9 @@ INPUTS = {
         selected=[],
         inline=True,
     ),
-    
-    # Equipo e Integridad
-    # "cluster2":{
-    "cl2_comp1_descriptors": ui.input_radio_buttons(
-        "cl2_comp1_descriptors",
+
+    "cl1_comp4_descriptors": ui.input_radio_buttons(
+        "cl1_comp4_descriptors",
         "Seleccione la opción que mejor se ajuste:",
         choices=[f'1 - {competencias.descriptor1[3]}', 
                  f'2 - {competencias.descriptor2[3]}', 
@@ -77,12 +75,24 @@ INPUTS = {
         selected=[],
         inline=True,
     ),
-    "cl2_comp2_descriptors": ui.input_radio_buttons(
-        "cl2_comp2_descriptors",
+    
+    # Equipo e Integridad
+    # "cluster2":{
+    "cl2_comp1_descriptors": ui.input_radio_buttons(
+        "cl2_comp1_descriptors",
         "Seleccione la opción que mejor se ajuste:",
         choices=[f'1 - {competencias.descriptor1[4]}', 
                  f'2 - {competencias.descriptor2[4]}', 
                  f'3 - {competencias.descriptor3[4]}'],
+        selected=[],
+        inline=True,
+    ),
+    "cl2_comp2_descriptors": ui.input_radio_buttons(
+        "cl2_comp2_descriptors",
+        "Seleccione la opción que mejor se ajuste:",
+        choices=[f'1 - {competencias.descriptor1[5]}', 
+                 f'2 - {competencias.descriptor2[5]}', 
+                 f'3 - {competencias.descriptor3[5]}'],
         selected=[],
         inline=True,
     ),
@@ -92,27 +102,27 @@ INPUTS = {
     "cl3_comp1_descriptors": ui.input_radio_buttons(
         "cl3_comp1_descriptors",
         "Seleccione la opción que mejor se ajuste:",
-        choices=[f'1 - {competencias.descriptor1[5]}', 
-                 f'2 - {competencias.descriptor2[5]}', 
-                 f'3 - {competencias.descriptor3[5]}'],
-        selected=[],
-        inline=True,
-    ),
-    "cl3_comp2_descriptors": ui.input_radio_buttons(
-        "cl3_comp2_descriptors",
-        "Seleccione la opción que mejor se ajuste:",
         choices=[f'1 - {competencias.descriptor1[6]}', 
                  f'2 - {competencias.descriptor2[6]}', 
                  f'3 - {competencias.descriptor3[6]}'],
         selected=[],
         inline=True,
     ),
-    "cl3_comp3_descriptors": ui.input_radio_buttons(
-        "cl3_comp3_descriptors",
+    "cl3_comp2_descriptors": ui.input_radio_buttons(
+        "cl3_comp2_descriptors",
         "Seleccione la opción que mejor se ajuste:",
         choices=[f'1 - {competencias.descriptor1[7]}', 
                  f'2 - {competencias.descriptor2[7]}', 
                  f'3 - {competencias.descriptor3[7]}'],
+        selected=[],
+        inline=True,
+    ),
+    "cl3_comp3_descriptors": ui.input_radio_buttons(
+        "cl3_comp3_descriptors",
+        "Seleccione la opción que mejor se ajuste:",
+        choices=[f'1 - {competencias.descriptor1[8]}', 
+                 f'2 - {competencias.descriptor2[8]}', 
+                 f'3 - {competencias.descriptor3[8]}'],
         selected=[],
         inline=True,
     ),
@@ -122,27 +132,27 @@ INPUTS = {
     "cl4_comp1_descriptors": ui.input_radio_buttons(
         "cl4_comp1_descriptors",
         "Seleccione la opción que mejor se ajuste:",
-        choices=[f'1 - {competencias.descriptor1[8]}', 
-                 f'2 - {competencias.descriptor2[8]}', 
-                 f'3 - {competencias.descriptor3[8]}'],
-        selected=[],
-        inline=True,
-    ),
-    "cl4_comp2_descriptors": ui.input_radio_buttons(
-        "cl4_comp2_descriptors",
-        "Seleccione la opción que mejor se ajuste:",
         choices=[f'1 - {competencias.descriptor1[9]}', 
                  f'2 - {competencias.descriptor2[9]}', 
                  f'3 - {competencias.descriptor3[9]}'],
         selected=[],
         inline=True,
     ),
-    "cl4_comp3_descriptors": ui.input_radio_buttons(
-        "cl4_comp3_descriptors",
+    "cl4_comp2_descriptors": ui.input_radio_buttons(
+        "cl4_comp2_descriptors",
         "Seleccione la opción que mejor se ajuste:",
         choices=[f'1 - {competencias.descriptor1[10]}', 
                  f'2 - {competencias.descriptor2[10]}', 
                  f'3 - {competencias.descriptor3[10]}'],
+        selected=[],
+        inline=True,
+    ),
+    "cl4_comp3_descriptors": ui.input_radio_buttons(
+        "cl4_comp3_descriptors",
+        "Seleccione la opción que mejor se ajuste:",
+        choices=[f'1 - {competencias.descriptor1[11]}', 
+                 f'2 - {competencias.descriptor2[11]}', 
+                 f'3 - {competencias.descriptor3[11]}'],
         selected=[],
         inline=True,
     ),
@@ -152,23 +162,14 @@ INPUTS = {
     "cl5_comp1_descriptors": ui.input_radio_buttons(
         "cl5_comp1_descriptors",
         "Seleccione la opción que mejor se ajuste:",
-        choices=[f'1 - {competencias.descriptor1[11]}', 
-                 f'2 - {competencias.descriptor2[11]}', 
-                 f'3 - {competencias.descriptor3[11]}'],
-        selected=[],
-        inline=True,
-    ),
-    "cl5_comp2_descriptors": ui.input_radio_buttons(
-        "cl5_comp2_descriptors",
-        "Seleccione la opción que mejor se ajuste:",
         choices=[f'1 - {competencias.descriptor1[12]}', 
                  f'2 - {competencias.descriptor2[12]}', 
                  f'3 - {competencias.descriptor3[12]}'],
         selected=[],
         inline=True,
     ),
-    "cl5_comp3_descriptors": ui.input_radio_buttons(
-        "cl5_comp3_descriptors",
+    "cl5_comp2_descriptors": ui.input_radio_buttons(
+        "cl5_comp2_descriptors",
         "Seleccione la opción que mejor se ajuste:",
         choices=[f'1 - {competencias.descriptor1[13]}', 
                  f'2 - {competencias.descriptor2[13]}', 
