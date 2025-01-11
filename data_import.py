@@ -13,18 +13,78 @@ flie_path_competencia_evaluador_rol = app_dir/"competencia_evaluador_rol.xlsx"
 evaluadores = pd.read_csv(file_path_evaluadores)
 competencias = pd.read_excel(flie_path_competencias)
 competencia_evaluador_rol = pd.read_excel(flie_path_competencia_evaluador_rol)
-
+names_list = [
+    "",
+    "Luisa Fernanda Correa",
+    "Cristina Duque R.",
+    "Jancelly Pérez L",
+    "Paula Alzate D.",
+    "Deisy Morales C.",
+    "Mónica Dávila B.",
+    "Oscar Berrío C.",
+    "Jonathan Rios G",
+    "Catalina Lopera R.",
+    "Miguel Angel Aguirre",
+    "Mariana Ruiz",
+    "Luis Fernando Marin",
+    "Lina Marcela Henao",
+    "Ana maria",
+    "Yaneth Milena Garcia",
+    "Carolina Granados G",
+    "Manuela Pino T.",
+    "Patricia Pérez C.",
+    "Leifer David Zapata",
+    "Valentina Vélez",
+    "Nicole Rios Perez",
+    "Juliana Morales Parada",
+    "Laura Cordoba",
+    "Valentina Muriel",
+    "Alejandro Noreña",
+    "Alvaro Vanegas",
+    "Bernardo Ledesma",
+    "Carlos Guerra",
+    "Carlos Polo",
+    "Diego Sanin",
+    "Edgar Correa",
+    "Elkin lopera",
+    "Javier toro",
+    "Jorge Piragua",
+    "Jorge Mejia",
+    "Juan Carlos Arango",
+    "Julian Morales",
+    "Luis Fernando de Zubiria",
+    "Manuel Giraldo",
+    "Omar Mejia",
+    "Pedro Gaviria",
+    "Raul Naranjo",
+    "Santiago Vanegas",
+    "Carolina Mejia",
+    "Janeth Rosero",
+    "Paola Valdes",
+    "Luz Marina Salazar",
+    "Claudia Muñoz",
+    "Yulieth Gallego"
+]
 
 ### Esquema de inputs de UI.
 INPUTS = {
-    "name_evaluador": ui.input_text("name_evaluador", "Ingrese su nombre completo:"),
+    "name_evaluador": ui.input_select(
+        "name_evaluador",
+        "Seleccione su nombre:",
+        choices = names_list,
+        selected=[]
+        ),
     "rol_evaluador":ui.input_select(
         "rol_evaluador",
         "Rol del evaluador",
         choices = ["", "Líder", "Partner", "Cliente Interno", "Autoevaluación"]
         ),
-    "name_evaluado": ui.input_text("name_evaluado", 
-                                   "Ingrese nombre completo de la persona a evaluar:"),
+    "name_evaluado": ui.input_select(
+        "name_evaluado",
+        "Seleccione nombre de la persona a evaluar:",
+        choices = names_list,
+        selected=[]
+        ),
     "cargo_evaluado": ui.input_select(
         "cargo_evaluado",
         "Cargo del evaluado",

@@ -11,8 +11,8 @@ from shiny.express import input, ui, render
 from shiny_validate import InputValidator, check
 from shinywidgets import render_plotly
 from data_import import competencias, INPUTS, COMPS
-from utils import save_to_google_drive, get_worksheet_names, calculate_competence_averages
-
+from utils import save_to_google_drive, load_from_google_drive
+from utils import get_worksheet_names, calculate_competence_averages
 
 
 ### Carga dotenv
@@ -157,12 +157,20 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                         "Fecha evaluación",
                         format="dd-mm-yyyy",
                     )
+                    # Add a new dropdown for Cargos
+                # ui.input_select(
+                #     "select_cargo",
+                #     "Cargo",
+                #     ["", "Analista", "Auxiliar", "Director", "Médico"],  # Add more cargos as needed
+                #     selected=""
+                # )
+                    
 
                 with ui.accordion(open=False):
                     with ui.accordion_panel("Nivel de Desarrollo por Competencia"):
                         with ui.card():
                             @render_plotly
-                            def plot_competences():
+                            def plot_competences():                            
                                 try:
                                     df_subset = select_data()
                                     df_subset.rename(columns=COMPS, inplace=True)
@@ -177,7 +185,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                                 y='Competencia',
                                                 x='Nivel de Desarrollo',
                                                 text='Nivel de Desarrollo',
-                                                range_x=[30, 100],
+                                                range_x=[30, 105],
                                                 category_orders={'Competencia': competence_order},
                                                 color_discrete_sequence=['#4F7CAC'] ,
                                                 color='Nivel de Desarrollo',
@@ -192,25 +200,41 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                                                     ) 
 
                                 except:
-                                    comps = list(COMPS.values())
-                                    df_empty = pd.DataFrame({"Competencia": comps, "Nivel de Desarrollo": 0.0})
-                                    return px.bar(df_empty,
-                                                y='Competencia',
-                                                x='Nivel de Desarrollo',
-                                                text='Nivel de Desarrollo',
-                                                range_x=[30, 100],
-                                                category_orders={'Competencia': competence_order},
-                                                color_discrete_sequence=['#4F7CAC'] ,
-                                                color='Nivel de Desarrollo',
-                                                color_continuous_scale='Teal',                         
-                                                ).update_traces(
-                                                    textposition='outside',
-                                                ).update_layout(
-                                                    xaxis_title='Nivel de desarrollo (%)',
-                                                    yaxis_title='',
-                                                    coloraxis_showscale=False,
-                                                    margin=dict(l=0)
-                                                    ) 
+                                    all_data = load_from_google_drive()
+                                    # Extraer columnas de competencias y calcular promedios
+                                    comp_columns = [col for col in all_data.columns if col.startswith('cl')]
+                                    if not comp_columns:
+                                        raise ValueError("No se encontraron columnas de competencias en los datos.")
+
+                                    all_data[comp_columns] = all_data[comp_columns].apply(pd.to_numeric, errors='coerce')
+                                    print(comp_columns)
+                                    all_data.rename(columns=COMPS, inplace=True)
+                                    print(all_data.columns)
+                                    avg_data = all_data[comp_columns].mean().reset_index()
+                                    avg_data.columns = ['Competencia', 'Nivel de Desarrollo']
+                                    avg_data['Nivel de Desarrollo'] = (avg_data['Nivel de Desarrollo'] / 3) * 100
+                                    avg_data['Nivel de Desarrollo'] = avg_data['Nivel de Desarrollo'].round(2)
+                                    
+                                    # Crear el gráfico basado en los promedios
+                                    return px.bar(
+                                        avg_data,
+                                        y='Competencia',
+                                        x='Nivel de Desarrollo',
+                                        text='Nivel de Desarrollo',
+                                        range_x=[30, 100],
+                                        color_discrete_sequence=['#4F7CAC'],
+                                        color='Nivel de Desarrollo',
+                                        color_continuous_scale='Teal',
+                                    ).update_traces(
+                                        textposition='outside',
+                                    ).update_layout(
+                                        xaxis_title='Nivel de desarrollo (%)',
+                                        yaxis_title='',
+                                        coloraxis_showscale=False,
+                                        margin=dict(l=0)
+                                ) 
+                                        
+                            
 
                 with ui.layout_columns():
                     with ui.value_box(
@@ -402,3 +426,4 @@ def reset_inputs():
                 key,
                 selected=[]
             )
+

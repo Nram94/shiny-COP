@@ -1,11 +1,13 @@
 import base64
 from data_import import COMPS, WEIGHTS
+from datetime import datetime
 from dotenv import load_dotenv
 import gspread
 from google.oauth2.service_account import Credentials
 import json
 import pandas as pd
 import os
+
 
 def authenticate_google_drive():
     # Load the .env file
@@ -67,6 +69,8 @@ def load_from_google_drive():
     all_dfs = []
     header = None
     for sheet in worskheets:
+        if sheet.title == "Seleccione":
+            continue
         data = sheet.get_all_values()
         if header is None:
             header= data[0]
@@ -158,3 +162,25 @@ def calculate_competence_averages(user_name, input_date=None):
     return avg_df
 
 
+# def generate_excel_report():
+#     try:
+#         # Load data from Google Drive or other sources
+#         all_data = load_from_google_drive()
+
+#         # Extract relevant columns
+#         report_data = all_data[['name_evaluado', 'cargo_evaluado', 'rol_evaluador', 'created_at']]
+
+#         # Create a Pandas Excel writer using XlsxWriter as the engine
+#         output_path = f"reporte_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+#         writer = pd.ExcelWriter(output_path, engine='openpyxl')
+
+#         # Write the dataframe to the Excel file
+#         report_data.to_excel(writer, sheet_name='Report', index=False)
+
+#         # Save the Excel file
+#         writer.close()
+
+#         return output_path
+#     except Exception as e:
+#         print(f"Error generating report: {e}")
+#         return None
