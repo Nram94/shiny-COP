@@ -14,6 +14,7 @@ evaluadores = pd.read_csv(file_path_evaluadores)
 competencias = pd.read_excel(flie_path_competencias)
 competencia_evaluador_rol = pd.read_excel(flie_path_competencia_evaluador_rol)
 names_list = [
+    "",
     "Luisa Fernanda Correa",
     "Cristina Duque R.",
     "Jancelly Pérez L",
