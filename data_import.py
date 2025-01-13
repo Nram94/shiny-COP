@@ -14,7 +14,6 @@ evaluadores = pd.read_csv(file_path_evaluadores)
 competencias = pd.read_excel(flie_path_competencias)
 competencia_evaluador_rol = pd.read_excel(flie_path_competencia_evaluador_rol)
 names_list = [
-    "",
     "Luisa Fernanda Correa",
     "Cristina Duque R.",
     "Jancelly Pérez L",
@@ -28,7 +27,6 @@ names_list = [
     "Mariana Ruiz",
     "Luis Fernando Marin",
     "Lina Marcela Henao",
-    "Ana maria",
     "Yaneth Milena Garcia",
     "Carolina Granados G",
     "Manuela Pino T.",
@@ -38,32 +36,7 @@ names_list = [
     "Nicole Rios Perez",
     "Juliana Morales Parada",
     "Laura Cordoba",
-    "Valentina Muriel",
-    "Alejandro Noreña",
-    "Alvaro Vanegas",
-    "Bernardo Ledesma",
-    "Carlos Guerra",
-    "Carlos Polo",
-    "Diego Sanin",
-    "Edgar Correa",
-    "Elkin lopera",
-    "Javier toro",
-    "Jorge Piragua",
-    "Jorge Mejia",
-    "Juan Carlos Arango",
-    "Julian Morales",
-    "Luis Fernando de Zubiria",
-    "Manuel Giraldo",
-    "Omar Mejia",
-    "Pedro Gaviria",
-    "Raul Naranjo",
-    "Santiago Vanegas",
-    "Carolina Mejia",
-    "Janeth Rosero",
-    "Paola Valdes",
-    "Luz Marina Salazar",
-    "Claudia Muñoz",
-    "Yulieth Gallego"
+    "Valentina Muriel"
 ]
 
 ### Esquema de inputs de UI.
