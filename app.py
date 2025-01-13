@@ -13,6 +13,7 @@ from shinywidgets import render_plotly
 from data_import import competencias, INPUTS, COMPS
 from utils import save_to_google_drive, load_from_google_drive
 from utils import get_worksheet_names, calculate_competence_averages
+from utils import generate_excel_report, generate_excel_table
 
 
 ### Carga dotenv
@@ -157,6 +158,7 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                         "Fecha evaluación",
                         format="dd-mm-yyyy",
                     )
+
                     # Add a new dropdown for Cargos
                 # ui.input_select(
                 #     "select_cargo",
@@ -164,6 +166,10 @@ with ui.navset_bar(title="Centro de Ortopedia El Poblado", id="evaluacion_desemp
                 #     ["", "Analista", "Auxiliar", "Director", "Médico"],  # Add more cargos as needed
                 #     selected=""
                 # )
+                    # Add a download button
+                    ui.input_action_button("download_report", "Descargar Reporte", class_="btn btn-primary")
+                    ui.input_action_button("download_tabla", "Descargar Tabla de Datos", class_="btn btn-primary")
+
                     
 
                 with ui.accordion(open=False):
@@ -426,4 +432,25 @@ def reset_inputs():
                 key,
                 selected=[]
             )
+@reactive.effect
+@reactive.event(input.download_report)
+def handle_download_report():
+    report_path = generate_excel_report()
+    if report_path:
+        ui.modal_show(ui.modal("Reporte descargado con éxito.",
+                                footer=ui.modal_button("Cerrar", id="close_modal")))
+    else:
+        ui.modal_show(ui.modal("Error al generar el reporte. Inténtelo de nuevo.",
+                                footer=ui.modal_button("Cerrar", id="close_modal")))
 
+
+@reactive.effect
+@reactive.event(input.download_tabla)
+def handle_download_report():
+    report_path = generate_excel_table()
+    if report_path:
+        ui.modal_show(ui.modal("Tabla descargado con éxito.",
+                                footer=ui.modal_button("Cerrar", id="close_modal")))
+    else:
+        ui.modal_show(ui.modal("Error al generar el tabla. Inténtelo de nuevo.",
+                                footer=ui.modal_button("Cerrar", id="close_modal")))
