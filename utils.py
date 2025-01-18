@@ -180,7 +180,7 @@ def generate_excel_report():
         report_data.to_excel(writer, sheet_name='Report', index=False)
 
         # Save the Excel file
-        writer.save()
+        writer.close()
         output.seek(0)  # Rewind the buffer
 
         return output
