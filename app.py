@@ -437,6 +437,7 @@ def reset_inputs():
 def handle_download_report():
     report_path = generate_excel_report()
     if report_path:
+        ui.download(report_path, "reporte.xlsx")
         ui.modal_show(ui.modal("Reporte descargado con éxito.",
                                 footer=ui.modal_button("Cerrar", id="close_modal")))
     else:
@@ -449,8 +450,10 @@ def handle_download_report():
 def handle_download_report():
     report_path = generate_excel_table()
     if report_path:
+        
         ui.modal_show(ui.modal("Tabla descargado con éxito.",
                                 footer=ui.modal_button("Cerrar", id="close_modal")))
+        
     else:
         ui.modal_show(ui.modal("Error al generar el tabla. Inténtelo de nuevo.",
                                 footer=ui.modal_button("Cerrar", id="close_modal")))
