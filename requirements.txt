@@ -1,6 +1,6 @@
 faicons
 openpyxl
-shiny
+shiny=1.0.0
 shiny_validate
 shinywidgets
 pandas
