@@ -4,6 +4,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import gspread
 from google.oauth2.service_account import Credentials
+from io import BytesIO
 import json
 import pandas as pd
 from pathlib import Path
@@ -172,17 +173,17 @@ def generate_excel_report():
         report_data = all_data[['name_evaluado', 'cargo_evaluado', 'rol_evaluador', 'created_at']]
 
         # Create a Pandas Excel writer using openpyxl as the engine
-        downloads_path = str(Path.home() / "Downloads")
-        output_path = os.path.join(downloads_path, f"reporte_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
-        writer = pd.ExcelWriter(output_path, engine='openpyxl')
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='openpyxl')
 
         # Write the dataframe to the Excel file
         report_data.to_excel(writer, sheet_name='Report', index=False)
 
         # Save the Excel file
-        writer.close()
+        writer.save()
+        output.seek(0)  # Rewind the buffer
 
-        return output_path
+        return output
     except Exception as e:
         print(f"Error generating report: {e}")
         return None
